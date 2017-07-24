@@ -1,3 +1,3 @@
-FROM alpine:3.5
+FROM onsdigital/dp-concourse-tools-awscli
 
-RUN apk add --update bash git jq && rm -rf /var/cache/apk/*
+RUN apk add --update git && rm -rf /var/cache/apk/*
