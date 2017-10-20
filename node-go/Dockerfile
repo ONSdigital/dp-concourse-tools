@@ -1,4 +1,4 @@
-FROM golang:1.8.3
+FROM golang:1.9.1
 
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash
 
