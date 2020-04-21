@@ -6,7 +6,6 @@ RUN apk update \
        ca-certificates \
        bash \
        make \
-    && update-ca-certificates 2>/dev/null || true \
     && rm -rf /var/cache/apk/* 
 
 RUN wget -O /usr/local/bin/nancy "https://github.com/sonatype-nexus-community/nancy/releases/download/v0.1.14/nancy-linux.amd64-v0.1.14" \
