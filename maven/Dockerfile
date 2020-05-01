@@ -1,0 +1,7 @@
+FROM maven:3.5.0-jdk-8
+
+RUN apt-get -y update && \
+    apt-get -y --no-install-recommends install make && \
+    rm -rf /var/lib/apt/lists/* 
+
+CMD /bin/bash
