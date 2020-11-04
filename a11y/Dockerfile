@@ -1,17 +1,17 @@
-FROM node
+FROM node:15.0.1
 
 LABEL maintainer="daniel.walford@ons.gov.uk"
 
-# Explicitly declare npm to root (docker runs as root anyway) allows global package installation for npm, needed for @axe-core/cli
+# Explicitly declare npm user is root (docker runs as root anyway) allows global package installation for npm, needed for @axe-core/cli
 RUN npm --global config set user root
 
-# We need wget to set up the Personal Package Archive (PPA) and unzip to install the Chromedriver
-RUN apt update
-RUN apt install -y wget unzip
+# Update apt then install wget to set up the Personal Package Archive (PPA) and unzip to install the Chromedriver
+RUN apt update \
+    && apt install -y wget unzip
 
 # Set up the Chrome PPA
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
 
 # Update the package list and install chrome
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
