@@ -7,7 +7,7 @@ RUN curl -sL https://deb.nodesource.com/setup_13.x | bash
 
 RUN apt-get update && \
     apt-get -y upgrade && \
-    apt-get -y install nodejs=8.* && \
+    apt-get -y install nodejs=13.* && \
     apt-get clean
 
 CMD /bin/bash
