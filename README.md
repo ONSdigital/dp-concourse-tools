@@ -13,8 +13,8 @@ To build and publish an image:
 ```shell
 # $DIR_NAME in the following is one of the directories in this repo
 cd $DIR_NAME
-docker build -t onsdigital/dp-concourse-tools-$DIR_NAME:latest .
-docker push onsdigital/dp-concourse-tools-$DIR_NAME:latest
+docker build -t onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest .
+docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
 ```
 
 Contributing
