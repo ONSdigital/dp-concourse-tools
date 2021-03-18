@@ -1,6 +1,16 @@
-FROM williamyeh/ansible:alpine3
+FROM alpine:3
 
-RUN apk add --update bash curl gnupg gzip make git && rm -rf /var/cache/apk/*
+ENV ANSIBLE_VERSION=2.10.6-r0
+ENV PACKER_VERSION=1.7.0
 
-RUN curl https://releases.hashicorp.com/packer/1.3.5/packer_1.3.5_linux_amd64.zip | \
+RUN apk add --no-cache \
+        bash \
+        curl \
+        gnupg \
+        gzip \
+        make \
+        git \
+        ansible=$ANSIBLE_VERSION
+
+RUN curl "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip" | \
     zcat > /usr/local/bin/packer && chmod +x /usr/local/bin/packer
