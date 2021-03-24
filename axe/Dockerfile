@@ -1,11 +1,11 @@
-FROM node:15.0.1
+FROM node:15.12.0
 
 LABEL maintainer="dev.digitalpublishing@ons.gov.uk"
 
 # Update apt then install wget to set up the Personal Package Archive (PPA) and unzip to install the Chromedriver.
 # Then set up the Chrome PPA and update the package list and install chrome
 RUN apt update \
-    && apt install -y --no-install-recommends wget unzip \
+    && apt install -y --no-install-recommends wget unzip jq \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | tee /etc/apt/sources.list.d/google-chrome.list \
     && apt update \
