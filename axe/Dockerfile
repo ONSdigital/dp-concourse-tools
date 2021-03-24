@@ -1,4 +1,4 @@
-FROM node:15.0.1
+FROM node:15.12.0
 
 LABEL maintainer="dev.digitalpublishing@ons.gov.uk"
 
