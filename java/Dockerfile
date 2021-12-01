@@ -1,4 +1,4 @@
-FROM maven:3.5.0-jdk-8
+FROM maven:3-openjdk-8
 
 RUN apt-get -y update && \
     apt-get -y --no-install-recommends install make && \
