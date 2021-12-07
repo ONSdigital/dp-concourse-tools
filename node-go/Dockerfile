@@ -1,3 +1,4 @@
+# Using buster as the default one (bullseye) is not yet supported by nodeJS 13
 FROM golang:1.17.4-buster
 
 RUN wget -O /usr/local/bin/nancy "https://github.com/sonatype-nexus-community/nancy/releases/download/v1.0.29/nancy-v1.0.29-linux-amd64" \
