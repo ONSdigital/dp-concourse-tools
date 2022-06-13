@@ -6,7 +6,7 @@ RUN apk add --update \
     make         \
     && rm -rf /var/cache/apk/*
 
-RUN wget -O /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64" \
+RUN wget -O /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.25.2/yq_linux_amd64" \
     && chmod 755 /usr/local/bin/yq
 
 ENTRYPOINT []
