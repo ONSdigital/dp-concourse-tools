@@ -4,11 +4,11 @@ FROM golang:1.17.4-buster
 RUN wget -O /usr/local/bin/nancy "https://github.com/sonatype-nexus-community/nancy/releases/download/v1.0.29/nancy-v1.0.29-linux-amd64" \
     && chmod 755 /usr/local/bin/nancy
 
-RUN curl -sL https://deb.nodesource.com/setup_13.x | bash
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
 
 RUN apt-get update && \
     apt-get -y upgrade && \
-    apt-get -y install nodejs=13.* && \
+    apt-get -y install nodejs=14.* && \
     apt-get clean
 
 CMD /bin/bash
