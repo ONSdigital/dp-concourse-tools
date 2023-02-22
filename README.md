@@ -8,15 +8,23 @@ All images are currently published to Docker Hub. You will require a login to th
 
 On commandline run `docker login` or [see docker docs](https://docs.docker.com/engine/reference/commandline/login/)
 
+### Contents
+
+* [Build and Publish Image](#build-and-publish-image): How to build and publish an image
+* [Tagging Docker Images](#tagging-docker-images): Guidance for tagging docker images
+* [Labelling Dockerfiles](#labelling-docker-images): Guidance for adding labels to dockerfiles
+* [Renaming existing images](#renaming-existing-images): How to rename an existing tagged image
+
 ### Build and Publish Image
 
 #### Prerequisites
 
 - You will need to know what tag you are going to give to your new image, please read the [tagging docker images documentation before continuing](#tagging-docker-images)
 - It is desirable to add Labels to the docker image, please read through the [adding labels documentation before continuing](#labelling-docker-images)
-- Check the current "latest" tagged version of docker repo has an equivalent tag so the image is not lost; if it doesn't exist follow [renaming existing images documentation](#renaming-existing-images)
+- Check the current "latest" tagged version of docker repo has an equivalent tag so the image is not lost
+  - Can use steps 1 to 4 in [renaming existing images documentation](#renaming-existing-images), use step 4 to compare image tag ids for a docker repo to see if latest image tag has a copy
 
-To build and publish an image:
+#### To build and publish an image:
 
 1. Build image under unique tag abiding by [tagging docker instructions](#tagging-docker-images)
 
