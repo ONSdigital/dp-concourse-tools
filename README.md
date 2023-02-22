@@ -1,6 +1,5 @@
 ## Digital Publishing Concourse Tools
 
-
 Build tools we use in our Concourse CI pipelines as docker images.
 
 ### Getting started
@@ -9,28 +8,69 @@ All images are currently published to Docker Hub. You will require a login to th
 
 On commandline run `docker login` or [see docker docs](https://docs.docker.com/engine/reference/commandline/login/)
 
-If the latest image does not exist as a specific tagged version, you will need to create a new image tagged with correct version. This will allow you to overwrite image tagged latest with new version without losing any images.
+### Build and Publish Image
 
-1. Rename existing image:
-   1. Find out what version the image for the existing latest version should be.
-      1. It should match the base image version of the dockerfile appended with rc tag, `rc-1` for first image using base image of golang 1.19.3 would result in a tag of `1.19.3-rc.1`. An update to the dockerfile that did not change the base image should move to `1.19.3-rc.2`. An update to the docker file that changed the base image to Go version to 1.19.4 will result in tag to be `1.19.4-rc.1`
-   1. Pull docker image from remote to local docker instance: `docker pull -a onsdigital/dp-concourse-tools-$(basename "${PWD}")`
-   1. Retrieve latest image id: `docker images -a | grep dp-concourse-tools-$(basename "${PWD}")`
-   1. Change tag on existing image: `docker tag <image id retrieved from previous step> onsdigital/dp-concourse-tools-$(basename "${PWD}"):<version, e.g. 1.19.4-rc.1>`
-   1. Push docker changes to remote dockerhub: `docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):<version>`
+#### Prerequisites
 
-Now it is safe to move on to uploading a new latest version of the image, following steps below.
+- You will need to know what tag you are going to give to your new image, please read the [tagging docker images documentation before continuing](#tagging-docker-images)
+- It is desirable to add Labels to the docker image, please read through the [adding labels documentation before continuing](#labelling-docker-images)
+- Check the current "latest" tagged version of docker repo has an equivalent tag so the image is not lost; if it doesn't exist follow [renaming existing images documentation](#renaming-existing-images)
 
-2. To build and publish an image:
+To build and publish an image:
+
+1. Build image under unique tag abiding by [tagging docker instructions](#tagging-docker-images)
 
 ```shell
 # $DIR_NAME in the following is one of the directories in this repo
 cd $DIR_NAME
+docker build -t onsdigital/dp-concourse-tools-$(basename "${PWD}"):<tag> .
+docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):<tag>
+```
+
+2. Overwrite latest with new image
+
+```shell
+cd $DIR_NAME # Unecessary step if already in directory containing dockerfile
 docker build -t onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest .
 docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
 ```
 
-Follow steps in 1. to create a duplicate image tagged with correct semantic version.
+### Tagging Docker Images
+
+- The base image used in dockerfile should be represented as the first part of the new tag, see table below
+- Other installations in the docker image should also be included
+
+| Base Image             | Other installs                 | Tag                                 |
+| ---------------------- | ------------------------------ | ----------------------------------- |
+| FROM maven:3.5.0-jdk-8 | Node 8                         | 3.5.0-node-8                        |
+| FROM golang:1.19.4     | Node 14                        | 1.19.4-node-14                      |
+| FROM golang:1.19.4     | Node 14, golangci-lint v1.51.0 | 1.19.4-node-14-golangci-lint-1.51.0 |
+
+### Labelling docker images
+
+Use labels to assist developers to know which image they should be using and where they can find further information. Labels are added to the dockerfile and begin with the term `LABEL`, see table below of expected labels to add to your dockerfile.
+
+**LABELS**
+
+| Key                       | Value  | Label example                                                     | Required |
+| ------------------------- | ------ | ----------------------------------------------------------------- | -------- |
+| <install-name->_version   | string | LABEL go_version="1.19.4"                                         | true     |
+| git_repo                  | string | LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools" | true     |
+| folder                    | string | LABEL folder="node-go"                                            | true     |
+| git_commit                | string | LABEL git_commit="5ef37cff8df2297d039395bf64f1be600241508c"       | true     |
+
+### Renaming existing images
+
+If the latest image does not exist as a specific tagged version, you will need to create a new image tagged with correct version. This will allow you to overwrite image tagged latest with new version without losing any images.
+
+1. Find out what version the image for the existing latest version should be, [see tagging docker images](#tagging-docker-images)
+1. $DIR_NAME in the following is one of the directories in this repo: `cd $DIR_NAME`
+1. Pull docker image from remote to local docker instance: `docker pull -a onsdigital/dp-concourse-tools-$(basename "${PWD}")`
+1. Retrieve latest image id: `docker images -a | grep dp-concourse-tools-$(basename "${PWD}")`
+1. Change tag on existing image: `docker tag <image id retrieved from previous step> onsdigital/dp-concourse-tools-$(basename "${PWD}"):<tag>`
+1. Push docker changes to remote dockerhub: `docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):<tag>`
+
+Now it is safe to move on to uploading a new latest version of the image, [following build and publish image steps](#build-and-publish-image)
 
 Contributing
 ------------
