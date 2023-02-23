@@ -3,6 +3,7 @@ FROM golang:1.19.4
 # Label docker image
 LABEL go_version="1.19.4"
 LABEL node_version="14"
+LABEL nancy_version=1.0.29
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="node-go"
 LABEL git_commit="5ef37cff8df2297d039395bf64f1be600241508c"
