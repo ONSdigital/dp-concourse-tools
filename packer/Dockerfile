@@ -8,11 +8,9 @@ ENV PACKER_VERSION=1.7.8
 LABEL "packer_version"="1.7.8"
 
 
-ENV ANSIBLE_VERSION=2.10
-LABEL "ansible_version"="2.10"
+ENV ANSIBLE_VERSION=2.10.7
+LABEL "ansible_version"="2.10.7"
 Run apt update
-RUN apt install -y software-properties-common
-RUN add-apt-repository --yes --update ppa:ansible/ansible-2.10
 RUN apt-get -y install \
         bash \
         curl \
@@ -20,9 +18,11 @@ RUN apt-get -y install \
         gzip \
         make \
         git \
+        python3-pip \
         dpkg 
 
-Run apt install -y ansible
+RUN pip3 install ansible-base==$ANSIBLE_VERSION
+RUN pip3 install ansible==$ANSIBLE_VERSION
 
 RUN curl "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip" | \
         zcat > /usr/local/bin/packer && chmod +x /usr/local/bin/packer
