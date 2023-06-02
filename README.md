@@ -54,7 +54,7 @@ You can check this on selecting the image you want to change [dockerhub](https:/
 3. Re-tag the image you just built with the latest tag and push to dockerhub (effectively making your new image the latest one)
 
     ```shell
-    docker tag onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG> onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG>
+    docker tag onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG> onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
     docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
     ```
 
