@@ -33,8 +33,8 @@ Use labels to assist developers to know which image they should be using and whe
 - You will need to know what tag you are going to give to your new image, please read the [Tagging strategy](#tagging-strategy) section before continuing
 - It is desirable to add Labels to the docker image, please read through the [labelling docker images](#labelling-docker-images) section before continuing
 
-> :warning: **Check the current "latest" tagged version of docker repo has an equivalent "version" tag so the image is not lost**  
-You can check this on selecting the image you want to change [dockerhub](https://hub.docker.com/repositories/onsdigital?search=dp-concourse-tools) if you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image
+> :warning: **Check the current "latest" tagged version of docker repo has an equivalent "version" tag so the image is not lost**
+You can check this on selecting the image you want to change [dockerhub](https://hub.docker.com/repositories/onsdigital?search=dp-concourse-tools). If you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image
 
 1. Build image under unique tag abiding by instructions in [Tagging strategy](#tagging-strategy) section
 
