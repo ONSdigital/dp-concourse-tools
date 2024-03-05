@@ -1,7 +1,7 @@
-FROM golang:1.20.3
+FROM golang:1.21.5
 
 # Label docker image
-LABEL go_version="1.20.3"
+LABEL go_version="1.21.5"
 LABEL node_version="20"
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="node-go"
