@@ -1,6 +1,6 @@
-FROM golang:1.20.3
+FROM golang:1.23.1
 
-LABEL go_version=1.20.3
+LABEL go_version=1.23.1
 LABEL nancy_version=1.0.42
 LABEL git_repo=https://github.com/ONSdigital/dp-concourse-tools
 LABEL folder=nancy
