@@ -1,7 +1,7 @@
-FROM golang:1.21.7-bullseye
+FROM golang:1.23.1-bullseye
 
 # Label docker image
-LABEL go_version="1.21.7-bullseye"
+LABEL go_version="1.23.1-bullseye"
 LABEL node_version="20"
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="node-go"
