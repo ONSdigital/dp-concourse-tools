@@ -1,4 +1,4 @@
-FROM maven:3-openjdk-8
+FROM maven:3.8.8-eclipse-temurin-8
 
 RUN apt-get -y update && \
     apt-get -y --no-install-recommends install make && \
