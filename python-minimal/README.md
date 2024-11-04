@@ -6,27 +6,30 @@ Log in to the AWS CI account and in "Elastic Container Registry" ensure there is
 
 If it is missing, create it.
 
-Then in a terminal, first initialise:
+Then in a terminal, first initialise (update `<AWS CI account id>` with the account ID value):
 
 ```shell
-export ECR_AWS_ACCOUNT_ID=<AWS CI account id>
+export ECR_AWS_ACCOUNT_URL=<AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com
+export PYTHON_VERSION=3.12
+export ALPINE_VERSION=3.20.3
+export IMAGE_ALIAS=onsdigital/dp-concourse-tools-python-minimal:${ALPINE_VERSION}-python-${PYTHON_VERSION}
 ```
 
 Then execute these 4 lines:
 
 ```shell
-docker build -t onsdigital/dp-concourse-tools-python-minimal:3.20.3-python-3.12 -f Dockerfile.alpine-python-minimal .
+docker build -t ${IMAGE_ALIAS} -f Dockerfile.alpine-python-minimal .
 
-aws ecr get-login-password --region eu-west-2 --profile dp-ci | docker login --username AWS --password-stdin $(ECR_AWS_ACCOUNT_ID).dkr.ecr.eu-west-2.amazonaws.com
+aws ecr get-login-password --region eu-west-2 --profile dp-ci | docker login --username AWS --password-stdin ${ECR_AWS_ACCOUNT_URL}
 
-docker tag onsdigital/dp-concourse-tools-python-minimal:3.20.3-python-3.12 $(ECR_AWS_ACCOUNT_ID).dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-python-minimal:3.20.3-python-3.12
+docker tag ${IMAGE_ALIAS} ${ECR_AWS_ACCOUNT_URL}/${IMAGE_ALIAS}
 
-docker push $(ECR_AWS_ACCOUNT_ID).dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-python-minimal:3.20.3-python-3.12
+docker push ${ECR_AWS_ACCOUNT_URL}/${IMAGE_ALIAS}
 ```
 
-## Support test apps used to test the built Dockerfile image is suitable for CI
+## Run tests for the created Docker image
 
-Test app run my container:
+This minimal app will be run in the container by the tests below it:
   helloworld.py
 
 Test command showing a pass:
