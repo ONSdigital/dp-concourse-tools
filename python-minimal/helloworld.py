@@ -22,5 +22,3 @@ if __name__ == '__main__':
     print(__file__ + "\n")
 
     print("input_file_name: "+input_file_name)
-
-    exit(0)

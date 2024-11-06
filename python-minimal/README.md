@@ -1,8 +1,10 @@
 # Minimal python in Alpine image
 
+This image is used to run python scripts in CI tasks.
+
 ## Build and push to AWS ECR instructions
 
-### Prerequsites
+### Prerequisites
 
 Log in to the AWS CI account and in "Elastic Container Registry" ensure there is a repository named "onsdigital/dp-concourse-tools-python-minimal".
 
@@ -13,7 +15,7 @@ If it is missing, create it.
 In a terminal, run:
 
 ```shell
-make build
+make build publish
 ```
 
 ## Run tests for the created Docker image

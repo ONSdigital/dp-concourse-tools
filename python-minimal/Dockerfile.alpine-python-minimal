@@ -14,7 +14,7 @@ RUN find . -name "*.cpython-*.opt-2.pyc" | awk '{print $1, $1}' | sed 's/__pycac
 # with the following commented out, when running python script it first outputs these warnings:
 #   Could not find platform independent libraries <prefix>
 #   Could not find platform dependent libraries <exec_prefix>
-# which are typically not a problem, but if your require whats been removed, please build a new image (which will be larger)
+# which are typically not a problem, but if you require whats been removed, please build a new image (which will be larger)
 # and use that instead of making this image larger.
 RUN find . -mindepth 1 | grep -v -E '^\./(encodings)([/.].*)?$' | xargs rm -rf
 # The following saves 10MB
