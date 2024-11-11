@@ -18,6 +18,14 @@ In a terminal, run:
 make build publish
 ```
 
+The `publish` might fail if you are not using docker-desktop. A possible fix for this is to remove the following line from `~/.docker/config.json`:
+
+```json
+    "credsStore": "desktop",
+```
+
+And try again.
+
 ## Run tests for the created Docker image
 
 This minimal app will be run in the container by the tests below it:
