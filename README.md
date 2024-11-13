@@ -2,7 +2,9 @@
 
 Build tools we use in our Concourse CI pipelines as docker images.
 
-All images are currently published to Docker Hub. You will require a login to the [onsdigital](https://hub.docker.com/orgs/onsdigital/repositories) Docker Hub organisation to view as well as write permissions to push changes to account. (The write permissions are usually restricted to TLs and Platform team)
+We now get images from the AWS CI account Private ECR.
+
+All images have been copied from Docker Hub into AWS CI account Private ECR.
 
 ## Tagging strategy
 
@@ -32,30 +34,32 @@ Use labels to assist developers to know which image they should be using and whe
 
 - You will need to know what tag you are going to give to your new image, please read the [Tagging strategy](#tagging-strategy) section before continuing
 - It is desirable to add Labels to the docker image, please read through the [labelling docker images](#labelling-docker-images) section before continuing
+- If you are creating a completely new image that has not been used before, you will first need to create the Repository name in the AWS ECR Private registry - before building and pushing the image.
 
 > :warning: **Check the current "latest" tagged version of docker repo has an equivalent "version" tag so the image is not lost**
-You can check this on selecting the image you want to change [dockerhub](https://hub.docker.com/repositories/onsdigital?search=dp-concourse-tools). If you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image
+You can check this on selecting the image you want to change in AWS CI account Private ECR, searching for dp-concourse-tools. If you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image
 
 1. Build image under unique tag abiding by instructions in [Tagging strategy](#tagging-strategy) section
 
     ```shell
     # $TOOL_DIR in the following is one of the directories in this repo
     cd dp-concourse-tools/$TOOL_DIR
-    docker build -t onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG> .
+    docker build -t <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG> .
     ```
 
-2. Push the new image and tag to dockerhub
+2. Push the new image and tag to AWS CI account Private ECR.
 
     ```shell
-    docker login #You need to login to dockerhub via the cli before continuing
-    docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG>
+    aws ecr get-login-password --region eu-west-2 --profile dp-ci | docker login --username AWS --password-stdin <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com
+
+    docker push <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG>
     ```
 
-3. Re-tag the image you just built with the latest tag and push to dockerhub (effectively making your new image the latest one)
+3. Re-tag the image you just built with the latest tag and push to AWS CI account Private ECR (effectively making your new image the latest one)
 
     ```shell
-    docker tag onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG> onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
-    docker push onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
+    docker tag <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG> <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
+    docker push <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
     ```
 
 ## Version tagging for things with only latest tags
@@ -63,22 +67,25 @@ You can check this on selecting the image you want to change [dockerhub](https:/
 If the `latest` image does not exist as a specific tagged `version`, you will need to create a new image tagged with correct `version` first. This will allow you to overwrite image tagged `latest` with new `version` without losing any images.
 
 1. Find out what tag the image for the existing latest version should be, see the [Tagging strategy](#tagging-strategy) section
-1. Pull the remote docker image
+
+2. Pull the remote docker image
 
     ```shell
-    docker pull onsdigital/dp-concourse-tools-<TOOL_NAME>:latest
+    aws ecr get-login-password --region eu-west-2 --profile dp-ci | docker login --username AWS --password-stdin <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com
+
+    docker pull <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-<TOOL_NAME>:latest
     ```
 
-1. Change tag on latest image just pulled to the tag determined in step 1
+3. Change tag on latest image just pulled to the tag determined in step 1
 
     ```shell
-    docker tag onsdigital/dp-concourse-tools-<TOOL_NAME>:latest onsdigital/dp-concourse-tools-<TOOL_NAME>:<NEW_TAG>
+    docker tag <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-<TOOL_NAME>:latest <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-<TOOL_NAME>:<NEW_TAG>
     ```
 
-1. Push the new tag to dockerhub:
+4. Push the new tag to AWS CI account Private ECR:
 
     ```shell
-    docker push onsdigital/dp-concourse-tools-<TOOL_NAME>:<NEW_TAG>
+    docker push <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-<TOOL_NAME>:<NEW_TAG>
     ```
 
 ## Contributing
