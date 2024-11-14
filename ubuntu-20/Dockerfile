@@ -4,7 +4,7 @@ FROM ubuntu:focal-20241011
 LABEL ubuntu_version="ubuntu:focal-20241011"
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="ubuntu-20"
-LABEL git_commit="1a6c965fd00b4e4fa5145f53c131a5540f1a8808"
+LABEL git_commit="5fff27f41bee13899ee7e5e84aa25b823627f685"
 
 RUN apt-get update && \
     apt-get -y upgrade && \
