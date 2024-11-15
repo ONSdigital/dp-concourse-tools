@@ -15,6 +15,6 @@ publish:
 
 	docker push ${IMAGE_NAME}
 
-.PHONT: prune
+.PHONY: prune
 prune:
 	docker system prune
