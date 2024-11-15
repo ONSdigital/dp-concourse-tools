@@ -35,6 +35,19 @@ Use labels to assist developers to know which image they should be using and whe
 - You will need to know what tag you are going to give to your new image, please read the [Tagging strategy](#tagging-strategy) section before continuing
 - It is desirable to add Labels to the docker image, please read through the [labelling docker images](#labelling-docker-images) section before continuing
 - If you are creating a completely new image that has not been used before, you will first need to create the Repository name in the AWS ECR Private registry - before building and pushing the image.
+- If you are using colima, ensure you have done the following:
+
+```bash
+brew install docker-buildx
+
+mkdir -p ~/.docker/cli-plugins
+
+ln -s $(which docker-buildx) ~/.docker/cli-plugins/docker-buildx
+
+colima restart
+
+docker buildx version
+```
 
 > :warning: **Check the current "latest" tagged version of docker repo has an equivalent "version" tag so the image is not lost**
 You can check this on selecting the image you want to change in AWS CI account Private ECR, searching for dp-concourse-tools. If you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image
