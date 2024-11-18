@@ -2,13 +2,13 @@ SHELL := bash
 
 ECR_AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --profile dp-ci --query Account --output text)
 ECR_AWS_ACCOUNT_URL = $(ECR_AWS_ACCOUNT).dkr.ecr.eu-west-2.amazonaws.com
-PYTHON_VERSION = 3.12
-ALPINE_VERSION = 3.20.3
+PYTHON_VERSION=3.12
+ALPINE_VERSION=3.20.3
 IMAGE_ALIAS = onsdigital/dp-concourse-tools-python-minimal:${ALPINE_VERSION}-python-${PYTHON_VERSION}
 
 .PHONY: build
 build:
-	docker build -t ${IMAGE_ALIAS} -f Dockerfile.alpine-python-minimal .
+	docker build -t ${IMAGE_ALIAS} --build-arg PYTHON_VERSION=${PYTHON_VERSION} --build-arg ALPINE_VERSION="${ALPINE_VERSION}" -f Dockerfile.alpine-python-minimal .
 
 	docker tag ${IMAGE_ALIAS} ${ECR_AWS_ACCOUNT_URL}/${IMAGE_ALIAS}
 

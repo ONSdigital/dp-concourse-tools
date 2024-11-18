@@ -1,9 +1,10 @@
 # This Dockerfile was derived from:
 #    https://github.com/CrafterKolyan/tiny-python-docker-image/blob/main/Dockerfile.scratch-minimal
 
-ARG PYTHON_VERSION=3.12
+# 'ALPINE_VERSION' below needs a default value, and is replaced by build-arg in Makefile
+ARG ALPINE_VERSION="3.20.3"
 
-FROM alpine:3.20.3 AS builder
+FROM alpine:${ALPINE_VERSION} AS builder
 ARG PYTHON_VERSION
 
 RUN apk add --no-cache python3~=${PYTHON_VERSION}
@@ -24,7 +25,7 @@ RUN find . -name "__pycache__" -exec rm -r {} +
 
 # With the above the RUN's in place, final image size is ~ 15.1MB
 
-FROM alpine:3.20.3 AS final
+FROM alpine:${ALPINE_VERSION} AS final
 ARG PYTHON_VERSION
 
 COPY --from=builder /usr/bin/python3 /usr/bin/python3
