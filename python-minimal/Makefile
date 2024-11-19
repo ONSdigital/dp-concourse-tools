@@ -4,8 +4,7 @@ ECR_AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --profile dp-ci --query A
 ECR_AWS_ACCOUNT_URL = $(ECR_AWS_ACCOUNT).dkr.ecr.eu-west-2.amazonaws.com
 PYTHON_VERSION=3.12
 ALPINE_VERSION=3.20.3
-IMAGE_ALIAS = onsdigital/dp-concourse-tools-python-minimal:${ALPINE_VERSION}-python-${PYTHON_VERSION}
-IMAGE_NAME = ${ECR_AWS_ACCOUNT_URL}/${IMAGE_ALIAS}
+IMAGE_NAME = ${ECR_AWS_ACCOUNT_URL}/onsdigital/dp-concourse-tools-python-minimal:${ALPINE_VERSION}-python-${PYTHON_VERSION}
 
 .PHONY: build
 build:
