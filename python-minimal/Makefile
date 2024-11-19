@@ -8,7 +8,7 @@ IMAGE_ALIAS = onsdigital/dp-concourse-tools-python-minimal:${ALPINE_VERSION}-pyt
 
 .PHONY: build
 build:
-	docker build -t ${IMAGE_ALIAS} --build-arg PYTHON_VERSION=${PYTHON_VERSION} --build-arg ALPINE_VERSION="${ALPINE_VERSION}" -f Dockerfile.alpine-python-minimal .
+	docker build -t ${IMAGE_ALIAS} --build-arg PYTHON_VERSION=${PYTHON_VERSION} --build-arg ALPINE_VERSION="${ALPINE_VERSION}" .
 
 	docker tag ${IMAGE_ALIAS} ${ECR_AWS_ACCOUNT_URL}/${IMAGE_ALIAS}
 

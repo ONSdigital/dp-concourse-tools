@@ -1,7 +1,11 @@
-FROM ubuntu:focal-20241011
+# 'UBUNTU_VERSION' below needs a default value, and is replaced by build-arg in Makefile
+ARG UBUNTU_VERSION="focal-20241011"
+
+FROM ubuntu:${UBUNTU_VERSION}
+ARG UBUNTU_VERSION
 
 # Label docker image
-LABEL ubuntu_version="focal-20241011"
+LABEL ubuntu_version="${UBUNTU_VERSION}"
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="ubuntu-20"
 LABEL git_commit="5fff27f41bee13899ee7e5e84aa25b823627f685"
