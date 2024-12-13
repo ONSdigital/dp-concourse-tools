@@ -1,4 +1,4 @@
-FROM golang:1.23.1-bullseye
+FROM golang:1.23.4-bullseye
 
 # Label docker image
 LABEL go_version="1.23.4-bullseye"
