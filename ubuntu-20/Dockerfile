@@ -1,5 +1,5 @@
 # 'UBUNTU_VERSION' below needs a default value, and is replaced by build-arg in Makefile
-ARG UBUNTU_VERSION="focal-20241011"
+ARG UBUNTU_VERSION="jammy-20250126"
 
 FROM ubuntu:${UBUNTU_VERSION}
 ARG UBUNTU_VERSION
