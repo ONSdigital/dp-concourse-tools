@@ -1,8 +1,10 @@
-FROM golang:1.24.2-bullseye
+FROM golang:1.24.3-bullseye
+
+ARG NODEJS_VERSION="20.19.2"
 
 # Label docker image
-LABEL go_version="1.24.2-bullseye"
-LABEL node_version="20"
+LABEL go_version="1.24.3-bullseye"
+LABEL node_version="$NODEJS_VERSION"
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="node-go"
 LABEL git_commit="25e88233ab25f22ccc4e76672a3288dfcecb5752"
@@ -14,7 +16,7 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x | bash
 
 RUN apt-get update && \
     apt-get -y upgrade && \
-    apt-get -y install nodejs=20.* && \
+    apt-get -y install nodejs=$NODEJS_VERSION* && \
     apt-get clean
 
 CMD /bin/bash
