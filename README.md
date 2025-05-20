@@ -50,7 +50,9 @@ docker buildx version
 ```
 
 > :warning: **Check the current "latest" tagged version of docker repo has an equivalent "version" tag so the image is not lost**
-You can check this on selecting the image you want to change in AWS CI account Private ECR, searching for dp-concourse-tools. If you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image
+You can check this on selecting the image you want to change in AWS CI account Private ECR, searching for dp-concourse-tools. If you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image.
+
+There is now an alternate method to the below - see [Deploying via Makefile](#deploying-via-makefile)
 
 1. Build image under unique tag abiding by instructions in [Tagging strategy](#tagging-strategy) section
 
@@ -74,6 +76,18 @@ You can check this on selecting the image you want to change in AWS CI account P
     docker tag <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):<NEW_TAG> <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
     docker push <AWS CI account id>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${PWD}"):latest
     ```
+
+### Deploying via Makefile
+
+To do all the steps above by the Makefile targets you can do the following:
+
+```sh
+    TOOL="my tool" AWS_ACCOUNT_ID="my account id" NEW_TAG="my tag" make new
+```
+
+- TOOL is the name of the directory
+- AWS_ACCOUNT_ID can be retrieved from the `dp-ci` account
+- NEW_TAG should follow the versioning above
 
 ## Version tagging for things with only latest tags
 
