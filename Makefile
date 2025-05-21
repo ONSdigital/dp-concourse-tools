@@ -8,7 +8,10 @@ TOOL?=changeme
 AWS_ACCOUNT_ID?=changeme
 
 .PHONY: new
-new: check-env build login deploy deploy-latest ## Builds and deploys images to ECR
+new: check-env build login deploy ## Builds and deploys images to ECR
+
+.PHONY: new-latest
+new-latest: new deploy-latest ## Builds and deploys images to ECR, including a latest tag
 
 .PHONY: check-env
 check-env: ## Checks mandatory environment variables

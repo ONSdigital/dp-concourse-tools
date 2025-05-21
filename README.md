@@ -89,6 +89,16 @@ To do all the steps above by the Makefile targets you can do the following:
 - AWS_ACCOUNT_ID can be retrieved from the `dp-ci` account
 - NEW_TAG should follow the versioning above
 
+This only builds and deploys a tagged image, it does not add a `latest` tag.
+
+For the majority of use cases we should *not* be using `latest` tag. There are exceptions however, for example [Go libraries](https://github.com/ONSdigital/dp-standards/blob/main/DEPENDENCY_UPGRADING.md#go-based-apps-and-libraries)
+
+To build and deploy an image with a latest tag you can do the following:
+
+```sh
+    TOOL="my tool" AWS_ACCOUNT_ID="my account id" NEW_TAG="my tag" make new-latest
+```
+
 ## Version tagging for things with only latest tags
 
 If the `latest` image does not exist as a specific tagged `version`, you will need to create a new image tagged with correct `version` first. This will allow you to overwrite image tagged `latest` with new `version` without losing any images.
