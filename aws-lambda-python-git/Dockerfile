@@ -6,3 +6,4 @@ LABEL git_commit="9f4e35f456bd1680e77b86901dab3e9d8f4509c4"
 LABEL folder="aws-lambda-python-git"
 
 RUN microdnf update && microdnf install git -y  
+RUN pip install poetry
