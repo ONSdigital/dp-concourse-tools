@@ -6,6 +6,8 @@ RESET  := $(shell tput -Txterm sgr0)
 
 TOOL?=changeme
 AWS_ACCOUNT_ID?=changeme
+ECR_URL=${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital
+REPO_NAME=dp-concourse-tools-$(basename ${TOOL})
 
 .PHONY: new
 new: check-env build login deploy ## Builds and deploys images to ECR
@@ -31,7 +33,7 @@ check-env: ## Checks mandatory environment variables
 .PHONY: build
 build: ## Builds a specific image 
 	cd ${TOOL}; \
-	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${TOOL}"):$(NEW_TAG) .
+	docker build -t ${ECR_URL}/${REPO_NAME}:$(NEW_TAG) .
 
 .PHONY: login
 login: ## Logs in to AWS and Docker
@@ -39,12 +41,12 @@ login: ## Logs in to AWS and Docker
 
 .PHONY: deploy
 deploy: ## Deploys an image to ECR
-	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${TOOL}"):$(NEW_TAG)
+	docker push ${ECR_URL}/${REPO_NAME}:$(NEW_TAG)
 
 .PHONY: deploy-latest
 deploy-latest: ## Tags image as latest and deploys to ECR
-	docker tag ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${TOOL}"):$(NEW_TAG) ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${TOOL}"):latest; \
-	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-$(basename "${TOOL}"):latest
+	docker tag ${ECR_URL}/${REPO_NAME}:$(NEW_TAG) ${ECR_URL}/${REPO_NAME}:latest; \
+	docker push ${ECR_URL}/${REPO_NAME}:latest
 
 .PHONY: help
 help: ## Show help page for list of make targets
