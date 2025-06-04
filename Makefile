@@ -18,15 +18,15 @@ new-latest: new deploy-latest ## Builds and deploys images to ECR, including a l
 .PHONY: check-env
 check-env: ## Checks mandatory environment variables
 	@if [ "$(TOOL)" = "changeme" ]; then \
-		echo "TOOL is set to changeme - please set it to continue"; \
+		echo "TOOL is set to changeme - please set it to the appropriate tool name to continue"; \
 		exit 1; \
 	fi
 	@if [ "$(AWS_ACCOUNT_ID)" = "changeme" ]; then \
-		echo "AWS_ACCOUNT_ID is set to changeme - please set it to continue"; \
+		echo "AWS_ACCOUNT_ID is set to changeme - please set it to the appropriate account ID to continue"; \
 		exit 1; \
 	fi
 	@if [[ -z "$(NEW_TAG)" ]]; then \
-		echo "NEW_TAG is not set - please set it to continue"; \
+		echo "NEW_TAG is not set - please set a value to continue"; \
 		exit 1; \
 	fi
 
