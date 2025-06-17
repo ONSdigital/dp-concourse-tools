@@ -1,9 +1,9 @@
-FROM golang:1.24.3-bullseye
+FROM golang:1.24.4-bullseye
 
 ARG NODEJS_VERSION="20.19.2"
 
 # Label docker image
-LABEL go_version="1.24.3-bullseye"
+LABEL go_version="1.24.4-bullseye"
 LABEL node_version="$NODEJS_VERSION"
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="node-go"
