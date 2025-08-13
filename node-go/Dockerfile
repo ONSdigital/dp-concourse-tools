@@ -15,9 +15,7 @@ LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="node-go"
 LABEL git_commit="$COMMIT"
 
-RUN wget -O /usr/local/bin/nancy "https://github.com/sonatype-nexus-community/nancy/releases/download/v1.0.48/nancy-v1.0.48-linux-amd64" \
-    && chmod 755 /usr/local/bin/nancy
-
+# Setup Node
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash
 
 # Install Node
