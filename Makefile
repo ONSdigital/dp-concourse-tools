@@ -33,7 +33,7 @@ check-env: ## Checks mandatory environment variables
 .PHONY: build
 build: ## Builds a specific image 
 	cd ${TOOL}; \
-	docker build -t ${ECR_URL}/${REPO_NAME}:$(NEW_TAG) .
+	docker build --build-arg COMMIT=$(git rev-parse HEAD) -t ${ECR_URL}/${REPO_NAME}:$(NEW_TAG) .
 
 .PHONY: login
 login: ## Logs in to AWS and Docker
