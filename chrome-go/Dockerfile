@@ -9,9 +9,10 @@ LABEL go_version="$GOLANG_VERSION"
 LABEL git_repo=https://github.com/ONSdigital/dp-concourse-tools
 LABEL folder="chrome-go"
 
+ARG CHROME_KEY_NAME="/usr/share/keyrings/google-linux-signing-key.gpg"
 
-RUN wget -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o "$CHROME_KEY_NAME" \
+    && echo "deb [signed-by=$CHROME_KEY_NAME] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
 
 RUN apt-get update && \
     apt-get -y install google-chrome-stable && \
