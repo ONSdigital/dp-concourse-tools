@@ -1,8 +1,12 @@
-FROM golang:1.24.5-bullseye
+ARG GOLANG_VERSION="1.24.6-bookworm"
 
-ARG GOLANGCILINT_VERSION="2.1.6"
+FROM golang:$GOLANG_VERSION
 
-LABEL go_version="1.24.5-bullseye"
+# Has to be redeclared
+ARG GOLANG_VERSION
+ARG GOLANGCILINT_VERSION="2.4.0"
+
+LABEL go_version="${GOLANG_VERSION}"
 LABEL golangci-lint_version="$GOLANGCILINT_VERSION"
 
 # binary will be $(go env GOPATH)/bin/golangci-lint
