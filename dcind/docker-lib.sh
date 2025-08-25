@@ -60,7 +60,7 @@ start_docker() {
   echo "Version info:"
   # --- diagnostics (safe under `set -e`) ---
   echo "CGMODE: $([ -f /sys/fs/cgroup/cgroup.controllers ] && echo v2 || echo v1)"
-  echo "Kernel: $(uname -srmo)"
+  echo "Kernel (container view): $(uname -srmo)"
   [ -r /etc/os-release ] && . /etc/os-release && echo "Container OS: ${NAME:-unknown} ${VERSION_ID:-}" || true
   [ -r /etc/alpine-release ] && echo "Alpine release: $(cat /etc/alpine-release)" || true
   echo "Planned cgroup driver: $([ -d /run/systemd/system ] && echo systemd || echo cgroupfs)"
