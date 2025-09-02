@@ -4,6 +4,9 @@ This image is used to run component tests in CI
 
 Files were copied from: https://github.com/taylorsilva/dcind
 
+> [!IMPORTANT]
+> The upstream repo is no longer maintained.
+
 They were then adjusted and updated such that the resulting image works for both:
 
   Ubuntu 22.04 and Ubuntu 20.04
