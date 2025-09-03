@@ -134,10 +134,6 @@ start_docker() {
   else
     try_start
   fi
-
-  # if Docker is up, print actual driver/version:
-  docker info --format 'CgroupDriver={{.CgroupDriver}} CgroupVersion={{.CgroupVersion}}' 2>/dev/null || true
-  docker version --format 'Server={{.Server.Version}} Client={{.Client.Version}}' 2>/dev/null || docker --version || true
 }
 
 stop_docker() {
