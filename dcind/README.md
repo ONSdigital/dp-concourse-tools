@@ -13,6 +13,8 @@ They were then adjusted and updated such that the resulting image works for both
 
 to aid updating Concourse VM's from Ubuntu 20.04 to Ubuntu 22.04
 
+The versions of things specified in the files are the latest that can be used for this container to work on both Ubuntu 20.04 and Ubuntu 22.04
+
 ## Build and push to AWS ECR instructions
 
 ### Prerequisites
