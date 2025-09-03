@@ -1,7 +1,6 @@
 SHELL := bash
 
 DOCKER_VERSION = 20.10.24
-DOCKER_COMPOSE_VERSION = 1.29.2
 
 ECR_AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --profile dp-ci --query Account --output text)
 ECR_AWS_ACCOUNT_URL = $(ECR_AWS_ACCOUNT).dkr.ecr.eu-west-2.amazonaws.com
@@ -11,7 +10,6 @@ IMAGE_NAME = ${ECR_AWS_ACCOUNT_URL}/onsdigital/dcind
 build:
 	docker build -t ${IMAGE_NAME} \
 		--build-arg DOCKER_VERSION=${DOCKER_VERSION} \
-		--build-arg DOCKER_COMPOSE_VERSION=${DOCKER_COMPOSE_VERSION} \
 		.
 
 .PHONY: publish

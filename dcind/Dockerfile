@@ -1,7 +1,6 @@
 FROM alpine:3.22.1
 
 ARG DOCKER_VERSION=
-ARG DOCKER_COMPOSE_VERSION=
 
 # Install Docker and Docker Compose
 RUN apk --no-cache add \
