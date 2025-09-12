@@ -1,4 +1,4 @@
-DIR_NAME := terraform-alpine
+DIR_NAME ?= terraform-alpine
 DOCKERFILE := $(DIR_NAME)/Dockerfile
 ECR_REPO_BASE := onsdigital/dp-concourse-tools
 ECR_REPO := $(ECR_REPO_BASE)-$(DIR_NAME)

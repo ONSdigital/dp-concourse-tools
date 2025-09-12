@@ -1,0 +1,25 @@
+#!/bin/sh
+
+ASSUME_ROLE=${ASSUME_ROLE:-$1}
+ROLE_SESSION_NAME=${ROLE_SESSION_NAME:-$2}
+PROFILE_NAME=${PROFILE_NAME:-$3}
+
+if [ -z "$ASSUME_ROLE" ] || [ -z "$ROLE_SESSION_NAME" ] || [ -z "$PROFILE_NAME" ]; then
+  echo "ERROR: Missing required inputs."
+  echo "Usage: $0 <ASSUME_ROLE> <ROLE_SESSION_NAME> <PROFILE_NAME>"
+  echo "Or set environment variables: ASSUME_ROLE, ROLE_SESSION_NAME, PROFILE_NAME"
+  exit 1
+fi
+
+CREDS=$(aws sts assume-role --role-arn "$ASSUME_ROLE" --role-session-name "$ROLE_SESSION_NAME" --output json)
+
+ACCESS_KEY=$(echo "$CREDS" | jq -r .Credentials.AccessKeyId)
+SECRET_KEY=$(echo "$CREDS" | jq -r .Credentials.SecretAccessKey)
+SESSION_TOKEN=$(echo "$CREDS" | jq -r .Credentials.SessionToken)
+
+# Configure an AWS profile this is to satisfy how the dissemination terraform repos use profile option in the AWS provider
+aws configure set aws_access_key_id "$ACCESS_KEY" --profile "$PROFILE_NAME"
+aws configure set aws_secret_access_key "$SECRET_KEY" --profile "$PROFILE_NAME"
+aws configure set aws_session_token "$SESSION_TOKEN" --profile "$PROFILE_NAME"
+
+echo "AWS profile '$PROFILE_NAME' configured with temporary credentials."
