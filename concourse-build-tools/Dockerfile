@@ -22,8 +22,8 @@ RUN upx --best --lzma /usr/local/bin/gh
 FROM alpine:${ALPINE_VERSION}
 
 # Metadata Labels
-LABEL org.opencontainers.image.title="Dissemination Concourse Build Image to be run in EKS"
-LABEL org.opencontainers.image.description="Alpine based image with GitHub CLI, AWS CLI, yq, and git. Image to be used by the Dissemination EKS Concourse."
+LABEL org.opencontainers.image.title="Dissemination Concourse Build Image"
+LABEL org.opencontainers.image.description="Alpine based image with bash, git, jq, AWS CLI, openssh, yq, curl and sed. Image to be used by the Dissemination Concourse."
 LABEL org.opencontainers.image.source="https://github.com/ONSdigital/dp-concourse-tools/concourse-build-tools"
 LABEL org.opencontainers.image.documentation="https://github.com/ONSdigital/dp-concourse-tools/README.md"
 # LABEL org.opencontainers.image.version = ${TAG}
