@@ -1,7 +1,7 @@
 ## https://hub.docker.com/_/alpine/tags
-ARG ALPINE_VERSION=3.21.2
+ARG BASE_IMAGE_ALPINE_VERSION=3.21.2
 
-FROM alpine:${ALPINE_VERSION} AS builder
+FROM alpine:${BASE_IMAGE_ALPINE_VERSION} AS builder
 
 ## https://github.com/helm/helm/releases
 ARG HELM_VERSION=3.2.1
@@ -43,18 +43,21 @@ RUN upx --best --lzma /usr/local/bin/kubectl
 
 
 
-FROM alpine:${ALPINE_VERSION}
+FROM alpine:${BASE_IMAGE_ALPINE_VERSION}
+
+ARG TAG
+ARG COMMIT
 
 # Metadata Labels
 LABEL org.opencontainers.image.title="Dissemination Terraform Image"
-LABEL org.opencontainers.image.description="Alpine based image with Terraform, Helm, and kubectl. For compatibility with Dissemination EKS deployments."
-LABEL org.opencontainers.image.source="https://github.com/ONSdigital/dp-concourse-tools/terraform"
+LABEL org.opencontainers.image.description="Alpine based image with Terraform, Helm, and kubectl. For compatibility with Dissemination terraform structure and EKS deployments."
+LABEL org.opencontainers.image.source="https://github.com/ONSdigital/dp-concourse-tools/terraform-alpine"
 LABEL org.opencontainers.image.documentation="https://github.com/ONSdigital/dp-concourse-tools/terraform/README.md"
-# LABEL org.opencontainers.image.version = ${TAG}
+LABEL org.opencontainers.image.version=${TAG}
+LABEL org.opencontainers.image.revision=${COMMIT}
 # org.opencontainers.image.vendor
 # org.opencontainers.image.licenses
 # org.opencontainers.image.ref.name
-# org.opencontainers.image.revision
 # org.opencontainers.image.created
 # org.opencontainers.image.authors
 # org.opencontainers.image.url
