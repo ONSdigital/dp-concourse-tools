@@ -33,7 +33,7 @@ LABEL org.opencontainers.image.version=${TAG}
 LABEL org.opencontainers.image.revision=${COMMIT}
 
 # Install git, jq , aws-cli and openssh
-RUN apk add --no-cache bash git jq aws-cli openssh yq curl sed
+RUN apk add --no-cache bash git jq aws-cli openssh yq curl sed gpg gnupg pre-commit nodejs npm
 
 # Copy binaries from builder stage
 COPY --from=builder /usr/local/bin/gh /usr/local/bin/gh
