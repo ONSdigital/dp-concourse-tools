@@ -15,6 +15,10 @@ LABEL node_version="$NODEJS_VERSION"
 LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
 LABEL folder="lint-go-node"
 LABEL git_commit="$COMMIT"
+LABEL golangci-lint_version="$GOLANGCILINT_VERSION"
+
+# binary will be $(go env GOPATH)/bin/golangci-lint
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v$GOLANGCILINT_VERSION
 
 # Setup Node, Install Node, and Install redocly
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash && \
