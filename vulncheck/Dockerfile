@@ -3,7 +3,7 @@ ARG GOLANG_VERSION="1.26.2"
 FROM golang:$GOLANG_VERSION
 
 ARG GOLANG_VERSION
-ARG DIS_VULNCHECK_VERSION="v0.3.0"
+ARG DIS_VULNCHECK_VERSION="v0.4.0"
 # COMMIT should be provided from outside the build file as a build-arg
 ARG COMMIT
 
