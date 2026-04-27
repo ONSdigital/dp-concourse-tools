@@ -1,5 +1,5 @@
 ## https://hub.docker.com/_/alpine/tags
-ARG BASE_IMAGE_ALPINE_VERSION=3.21.2
+ARG BASE_IMAGE_ALPINE_VERSION=3.21.7
 
 FROM alpine:${BASE_IMAGE_ALPINE_VERSION} AS builder
 
