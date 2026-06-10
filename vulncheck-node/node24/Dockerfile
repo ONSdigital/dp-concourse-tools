@@ -1,0 +1,31 @@
+ARG GOLANG_VERSION="1.26.4"
+
+FROM golang:$GOLANG_VERSION
+
+ARG GOLANG_VERSION
+ARG DIS_VULNCHECK_VERSION="v0.5.0"
+ARG NODEJS_VERSION="24.16.0"
+# COMMIT should be provided from outside the build file as a build-arg
+ARG COMMIT
+
+LABEL go_version="$GOLANG_VERSION"
+LABEL dis_vulncheck_version="${DIS_VULNCHECK_VERSION}"
+LABEL git_repo=https://github.com/ONSdigital/dp-concourse-tools
+LABEL folder=vulncheck-node-24
+LABEL git_commit="$COMMIT"
+LABEL node_version="${NODEJS_VERSION}"
+
+# Add vulncheck dependencies
+RUN go install golang.org/x/vuln/cmd/govulncheck@latest
+RUN go install github.com/ONSdigital/dis-vulncheck@${DIS_VULNCHECK_VERSION}
+
+# Setup for node
+RUN curl -sL https://deb.nodesource.com/setup_24.x | bash
+
+# Add node
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    apt-get -y install nodejs=$NODEJS_VERSION* && \
+    apt-get clean
+
+CMD ["/bin/bash"]

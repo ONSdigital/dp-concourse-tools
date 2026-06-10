@@ -1,0 +1,27 @@
+ARG GOLANG_VERSION="1.26.4-bookworm"
+
+FROM golang:$GOLANG_VERSION
+
+ARG GOLANG_VERSION
+ARG NODEJS_VERSION="24.16.0"
+
+# COMMIT should be set from outside the buildfile as a build-arg
+ARG COMMIT
+
+# Label docker image
+LABEL go_version="$GOLANG_VERSION"
+LABEL node_version="$NODEJS_VERSION"
+LABEL git_repo="https://github.com/ONSdigital/dp-concourse-tools"
+LABEL folder="node-24-go"
+LABEL git_commit="$COMMIT"
+
+# Setup Node
+RUN curl -sL https://deb.nodesource.com/setup_24.x | bash
+
+# Install Node
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    apt-get -y install nodejs=$NODEJS_VERSION* && \
+    apt-get clean
+
+CMD ["/bin/bash"]

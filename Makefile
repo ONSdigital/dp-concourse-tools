@@ -5,9 +5,11 @@ CYAN   := $(shell tput -Txterm setaf 6)
 RESET  := $(shell tput -Txterm sgr0)
 
 TOOL?=changeme
+TOOL_DIR?=$(TOOL)
 AWS_ACCOUNT_ID?=changeme
 ECR_URL=${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital
 REPO_NAME=dp-concourse-tools-$(basename ${TOOL})
+NEW_TAG?=changeme
 
 .PHONY: new
 new: check-env build login deploy ## Builds and deploys images to ECR
@@ -18,21 +20,21 @@ new-latest: new deploy-latest ## Builds and deploys images to ECR, including a l
 .PHONY: check-env
 check-env: ## Checks mandatory environment variables
 	@if [ "$(TOOL)" = "changeme" ]; then \
-		echo "TOOL is set to changeme - please set it to the appropriate tool name to continue"; \
+		echo "TOOL is set to changeme - please set it to the appropriate ECR repository name to continue"; \
 		exit 1; \
 	fi
 	@if [ "$(AWS_ACCOUNT_ID)" = "changeme" ]; then \
 		echo "AWS_ACCOUNT_ID is set to changeme - please set it to the appropriate account ID to continue"; \
 		exit 1; \
 	fi
-	@if [[ -z "$(NEW_TAG)" ]]; then \
-		echo "NEW_TAG is not set - please set a value to continue"; \
+	@if [ "$(NEW_TAG)" = "changeme" ]; then \
+		echo "NEW_TAG is set to changeme - please set it to the appropriate tag to continue"; \
 		exit 1; \
 	fi
 
 .PHONY: build
-build: ## Builds a specific image
-	cd ${TOOL}; \
+build: check-env ## Builds a specific image
+	cd ${TOOL_DIR}; \
 	docker build --build-arg COMMIT=$(git rev-parse HEAD) -t ${ECR_URL}/${REPO_NAME}:$(NEW_TAG) .
 
 .PHONY: login

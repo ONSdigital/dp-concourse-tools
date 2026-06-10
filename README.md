@@ -79,15 +79,23 @@ There is now an alternate method to the below - see [Deploying via Makefile](#de
 
 ### Deploying via Makefile
 
+- TOOL is the ECR repository name of the tool you are building, for example `node-go` deploys to `dp-concourse-tools-node-go` ECR repository
+- TOOL_DIR is the directory in this repo where the dockerfile for your image is located (defaults to TOOL)
+  - Only specify TOOL_DIR when it differs from TOOL, for example `node-go/node24` or `node-go/node20`
+- AWS_ACCOUNT_ID can be retrieved from the `dp-ci` account
+- NEW_TAG should follow the versioning above
+
 To do all the steps above by the Makefile targets you can do the following:
 
 ```sh
     TOOL="my tool" AWS_ACCOUNT_ID="my account id" NEW_TAG="my tag" make new
 ```
 
-- TOOL is the name of the directory
-- AWS_ACCOUNT_ID can be retrieved from the `dp-ci` account
-- NEW_TAG should follow the versioning above
+If the dockerfile is in a subdirectory, specify TOOL_DIR:
+
+```sh
+    TOOL="node-go" TOOL_DIR="node-go/node24" AWS_ACCOUNT_ID="my account id" NEW_TAG="my tag" make new
+```
 
 This only builds and deploys a tagged image, it does not add a `latest` tag.
 
@@ -131,6 +139,6 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## License
 
-Copyright © 2021, Office for National Statistics (<https://www.ons.gov.uk>)
+Copyright © 2026, Office for National Statistics (<https://www.ons.gov.uk>)
 
 Released under MIT license, see [LICENSE](LICENSE.md) for details.
