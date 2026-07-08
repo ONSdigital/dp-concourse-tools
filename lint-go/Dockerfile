@@ -1,4 +1,4 @@
-ARG GOLANG_VERSION="1.26.4-bookworm"
+ARG GOLANG_VERSION="1.26.5-bookworm"
 
 FROM golang:$GOLANG_VERSION
 
