@@ -1,9 +1,9 @@
-ARG GOLANG_VERSION="1.26.5-bookworm"
+ARG GOLANG_VERSION="1.26.6-bookworm"
 
 FROM golang:$GOLANG_VERSION
 
 ARG GOLANG_VERSION
-ARG NODEJS_VERSION="24.16.0"
+ARG NODEJS_VERSION="24.19.0"
 
 # COMMIT should be set from outside the buildfile as a build-arg
 ARG COMMIT
