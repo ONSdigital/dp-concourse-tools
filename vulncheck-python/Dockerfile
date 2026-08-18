@@ -2,7 +2,7 @@ ARG GOLANG_VERSION="1.26.6-bookworm"
 ARG PYTHON_VERSION="3.14"
 
 FROM golang:${GOLANG_VERSION} AS go-base
-ARG DIS_VULNCHECK_VERSION="v0.6.0"
+ARG DIS_VULNCHECK_VERSION="v0.6.1"
 
 RUN go install golang.org/x/vuln/cmd/govulncheck@latest && \
 	go install github.com/ONSdigital/dis-vulncheck@${DIS_VULNCHECK_VERSION}
