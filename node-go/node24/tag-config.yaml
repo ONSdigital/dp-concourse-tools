@@ -1,0 +1,11 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.26.8-bookworm"
+    has_distro_suffix: true
+  - name: node
+    arg: NODEJS_VERSION
+    version: "24"
+    arg_value: "24.19.0"
+format: "{golang}-node-{node}"
+requiresIsLatest: true

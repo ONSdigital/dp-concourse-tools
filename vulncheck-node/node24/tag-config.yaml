@@ -1,0 +1,14 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.26.8"
+  - name: vulncheck
+    arg: DIS_VULNCHECK_VERSION
+    version: "0.6.1"
+    arg_value: "v0.6.1"
+  - name: node
+    arg: NODEJS_VERSION
+    version: "24"
+    arg_value: "24.19.0"
+format: "{golang}-vulncheck-{vulncheck}-node-{node}"
+requiresIsLatest: true

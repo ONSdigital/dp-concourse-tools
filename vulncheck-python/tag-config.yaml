@@ -1,0 +1,16 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.26.8"
+  - name: python
+    arg: PYTHON_VERSION
+    version: "3.14"
+  - name: vulncheck
+    arg: DIS_VULNCHECK_VERSION
+    version: "0.6.1"
+    arg_value: "v0.6.1"
+  - name: pip-audit
+    arg: PIPAUDIT_VERSION
+    version: "2.10.1"
+format: "{golang}-python-{python}-vulncheck-{vulncheck}-pip-audit-{pip-audit}"
+requiresIsLatest: true

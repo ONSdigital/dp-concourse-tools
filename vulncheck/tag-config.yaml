@@ -1,0 +1,10 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.26.8"
+  - name: vulncheck
+    arg: DIS_VULNCHECK_VERSION
+    version: "0.6.1"
+    arg_value: "v0.6.1"
+format: "{golang}-vulncheck-{vulncheck}"
+requiresIsLatest: true

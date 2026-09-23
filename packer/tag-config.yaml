@@ -1,0 +1,6 @@
+components:
+  - name: packer
+    arg: PACKER_VERSION
+    version: "3.0.0"
+format: "{packer}"
+requiresIsLatest: true

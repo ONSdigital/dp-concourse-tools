@@ -1,0 +1,10 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.26.8-bookworm"
+    has_distro_suffix: true
+  - name: chrome
+    arg: CHROME_VERSION
+    version: "googlechromestablelatest"
+format: "{golang}-{chrome}"
+requiresIsLatest: true
