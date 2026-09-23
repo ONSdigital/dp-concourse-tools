@@ -1,0 +1,11 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.27.2"
+    version_tag: "patch"
+    distro_suffix: "bookworm"
+  - name: chrome
+    arg: CHROME_VERSION
+    version_tag: "googlechromestablelatest"
+format: "{golang}-{chrome}"
+requiresIsLatest: true

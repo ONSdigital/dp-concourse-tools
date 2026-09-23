@@ -1,0 +1,12 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.26.8"
+    version_tag: "patch"
+    distro_suffix: "bookworm"
+  - name: node
+    arg: NODEJS_VERSION
+    version: "24.19.0"
+    version_tag: "major"
+format: "{golang}-node-{node}"
+requiresIsLatest: true

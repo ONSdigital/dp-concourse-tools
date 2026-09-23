@@ -1,0 +1,15 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.27.2"
+    version_tag: "patch"
+  - name: docker
+    arg: DOCKER_VERSION
+    version: "28.5.2"
+    version_tag: "major"
+  - name: python
+    arg: PYTHON_VERSION
+    version: "3.15"
+    version_tag: "patch"
+format: "{golang}-python-{python}-dind-{docker}"
+requiresIsLatest: true
