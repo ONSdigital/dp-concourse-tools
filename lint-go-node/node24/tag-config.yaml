@@ -1,0 +1,23 @@
+components:
+  - name: golang
+    arg: GOLANG_VERSION
+    version: "1.26.8-bookworm"
+    has_distro_suffix: true
+  - name: golangci-lint
+    arg: GOLANGCILINT_VERSION
+    version: "2.12.2"
+    VERSIONING:
+      enum:
+        - "major"
+        - "minor"
+        - "patch"
+  - name: node
+    arg: NODEJS_VERSION
+    version: "24.19.0"
+    VERSIONING:
+      enum:
+        - "major"
+        - "minor"
+        - "patch"
+format: "{golang}-golangci-lint-{golangci-lint}-node-{node}"
+requiresIsLatest: true
