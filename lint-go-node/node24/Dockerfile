@@ -20,12 +20,13 @@ LABEL golangci-lint_version="$GOLANGCILINT_VERSION"
 # binary will be $(go env GOPATH)/bin/golangci-lint
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v$GOLANGCILINT_VERSION
 
-# Setup Node, Install Node, and Install redocly
+# Setup Node, Install Node, and Install redocly / asyncapi
 RUN curl -sL https://deb.nodesource.com/setup_24.x | bash && \
     apt-get update && \
     apt-get -y upgrade && \
     apt-get -y install nodejs=$NODEJS_VERSION* && \
     apt-get clean && \
-    npm install -g @redocly/cli
+    npm install -g @redocly/cli \
+    npm install -g @asyncapi/cli
 
 CMD ["/bin/bash"]
