@@ -1,17 +1,17 @@
-ARG GOLANG_VERSION="1.27.2-bookworm"
+ARG GOLANG_VERSION="1.27.2"
 ARG PYTHON_VERSION="3.15"
 
 FROM golang:${GOLANG_VERSION} AS go-base
-ARG DIS_VULNCHECK_VERSION="v0.6.1"
+ARG DIS_VULNCHECK_VERSION="0.6.1"
 
 RUN go install golang.org/x/vuln/cmd/govulncheck@latest && \
-	go install github.com/ONSdigital/dis-vulncheck@${DIS_VULNCHECK_VERSION}
+	go install github.com/ONSdigital/dis-vulncheck@v${DIS_VULNCHECK_VERSION}
 
 FROM python:${PYTHON_VERSION}-bookworm
 
 ARG GOLANG_VERSION
 ARG PYTHON_VERSION
-ARG DIS_VULNCHECK_VERSION="v0.6.1"
+ARG DIS_VULNCHECK_VERSION="0.6.1"
 ARG PIP_AUDIT_VERSION="2.10.1"
 ARG COMMIT
 
