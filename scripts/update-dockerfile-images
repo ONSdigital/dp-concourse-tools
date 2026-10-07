@@ -1,0 +1,371 @@
+#!/usr/bin/env bash
+
+##############################################################################
+# Update Dockerfile Images Script
+# Updates tag-config.yaml and Dockerfile with new component versions
+##############################################################################
+
+set -o pipefail
+
+readonly COLOR_CYAN='\033[0;36m'
+readonly COLOR_GREEN='\033[0;32m'
+readonly COLOR_RED='\033[0;31m'
+readonly COLOR_YELLOW='\033[1;33m'
+readonly COLOR_NC='\033[0m'
+
+DRY_RUN=false
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+declare -a SELECTED_IMAGES=()
+declare -A IMAGE_PATHS=()
+declare -A IMAGE_VERSIONS=()
+BATCH_GOLANG=""
+
+log_info() { echo -e "${COLOR_CYAN}ℹ ${1}${COLOR_NC}"; }
+log_success() { echo -e "${COLOR_GREEN}✓ ${1}${COLOR_NC}"; }
+log_error() { echo -e "${COLOR_RED}✗ ${1}${COLOR_NC}"; }
+log_warning() { echo -e "${COLOR_YELLOW}⚠ ${1}${COLOR_NC}"; }
+
+check_dependencies() {
+    local deps=("yq" "git")
+    local missing=()
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing+=("$dep")
+        fi
+    done
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        log_error "Missing required tools: ${missing[*]}"
+        exit 1
+    fi
+    log_success "All required dependencies are installed"
+}
+
+discover_images() {
+    log_info "Discovering Docker images..."
+    local count=0
+    while IFS= read -r config_file; do
+        local image_dir=$(dirname "$config_file")
+        local image_name="${image_dir#$REPO_ROOT/}"
+        local component_count=$(yq eval '.components | length' "$config_file" 2>/dev/null)
+        if [[ "$component_count" -gt 0 ]]; then
+            IMAGE_PATHS[$image_name]="$image_dir"
+            ((count++))
+        fi
+    done < <(find "$REPO_ROOT" -name "tag-config.yaml" -type f | sort)
+    if [[ $count -eq 0 ]]; then
+        log_error "No tag-config.yaml files with components found!"
+        exit 1
+    fi
+    log_success "Discovered $count Docker image(s)"
+}
+
+has_golang_component() {
+    local image=$1
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    yq eval '.components[] | select(.name == "golang")' "$config" 2>/dev/null | grep -q .
+}
+
+get_component_names() {
+    local config=$1
+    yq eval '.components[] | .name' "$config" 2>/dev/null
+}
+
+get_component_version() {
+    local config=$1
+    local component_name=$2
+    yq eval ".components[] | select(.name == \"$component_name\") | .version" "$config" 2>/dev/null
+}
+
+show_menu() {
+    log_info "\nAvailable Docker images:"
+    echo ""
+    local index=1
+    local images_array=()
+    for image in $(printf '%s\n' "${!IMAGE_PATHS[@]}" | sort); do
+        images_array+=("$image")
+        printf "  %2d) %-40s\n" "$index" "$image"
+        ((index++))
+    done
+    local has_go_images=false
+    for image in "${images_array[@]}"; do
+        if has_golang_component "$image"; then
+            has_go_images=true
+            break
+        fi
+    done
+    echo ""
+    echo "  Options:"
+    echo "    Enter numbers (space, comma, or range: e.g., '1 3 5-7' or '1,3,5-7')"
+    echo "    'A' = Select all images"
+    if [[ "$has_go_images" == true ]]; then
+        echo "    'G' = Select all Go-based images (batch update golang)"
+    fi
+    echo "    'Q' = Quit"
+    echo ""
+    read -p "Select images: " -r selection
+    case "${selection,,}" in
+        a)
+            SELECTED_IMAGES=("${images_array[@]}")
+            ;;
+        g)
+            select_go_images "${images_array[@]}"
+            if [[ ${#SELECTED_IMAGES[@]} -gt 0 ]]; then
+                BATCH_GOLANG="true"
+            else
+                log_error "No Go-based images found"
+                exit 1
+            fi
+            ;;
+        q)
+            log_info "Exiting..."
+            exit 0
+            ;;
+        *)
+            parse_selection "$selection" "${images_array[@]}"
+            ;;
+    esac
+    if [[ ${#SELECTED_IMAGES[@]} -eq 0 ]]; then
+        log_error "No images selected"
+        exit 1
+    fi
+    log_success "Selected ${#SELECTED_IMAGES[@]} image(s) for update"
+    if [[ "$BATCH_GOLANG" == "true" ]]; then
+        log_info "\nGo-based images selected:"
+        for image in "${SELECTED_IMAGES[@]}"; do
+            echo "  • $image"
+        done
+    fi
+}
+
+select_go_images() {
+    local images_array=("$@")
+    for image in "${images_array[@]}"; do
+        if has_golang_component "$image"; then
+            SELECTED_IMAGES+=("$image")
+        fi
+    done
+}
+
+parse_selection() {
+    local selection=$1
+    shift
+    local images_array=("$@")
+    selection="${selection//,/ }"
+    for item in $selection; do
+        if [[ $item =~ ^([0-9]+)-([0-9]+)$ ]]; then
+            local start=${BASH_REMATCH[1]}
+            local end=${BASH_REMATCH[2]}
+            for num in $(seq "$start" "$end"); do
+                if [[ $num -ge 1 && $num -le ${#images_array[@]} ]]; then
+                    SELECTED_IMAGES+=("${images_array[$((num-1))]}");
+                fi
+            done
+        elif [[ $item =~ ^[0-9]+$ ]]; then
+            if [[ $item -ge 1 && $item -le ${#images_array[@]} ]]; then
+                SELECTED_IMAGES+=("${images_array[$((item-1))]}");
+            fi
+        fi
+    done
+}
+
+prompt_for_batch_golang() {
+    if [[ -z "$BATCH_GOLANG" || "$BATCH_GOLANG" == "true" ]]; then
+        read -p "Enter golang base version for all selected images: " -r golang_version
+        if [[ -n "$golang_version" ]]; then
+            BATCH_GOLANG="$golang_version"
+        fi
+    fi
+}
+
+prompt_for_versions() {
+    local image=$1
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    log_info "\nConfiguring versions for: $image"
+    declare -A versions
+    local components=$(get_component_names "$config")
+    for component_name in $components; do
+        local has_arg_value=$(yq eval ".components[] | select(.name == \"$component_name\") | .arg_value" "$config" 2>/dev/null)
+        local has_suffix=$(yq eval ".components[] | select(.name == \"$component_name\") | .has_distro_suffix" "$config" 2>/dev/null)
+        local current
+        if [[ "$has_arg_value" != "null" ]]; then
+            current="$has_arg_value"
+        else
+            current=$(get_component_version "$config" "$component_name")
+        fi
+        if [[ "$component_name" == "golang" && -n "$BATCH_GOLANG" && "$BATCH_GOLANG" != "true" ]]; then
+            local golang_version="$BATCH_GOLANG"
+            if [[ "$has_suffix" == "true" ]]; then
+                local current_suffix=""
+                if [[ "$current" == *"-"* ]]; then
+                    current_suffix="${current##*-}"
+                fi
+                read -p "  $component_name suffix (current: $current_suffix) [leave blank to keep current]: " -r suffix_input
+                if [[ -n "$suffix_input" ]]; then
+                    golang_version="${golang_version}-${suffix_input}"
+                elif [[ -n "$current_suffix" ]]; then
+                    golang_version="${golang_version}-${current_suffix}"
+                fi
+            fi
+            versions[$component_name]="$golang_version"
+            echo "  $component_name: $current → $golang_version (batch)"
+            continue
+        fi
+        if [[ "$has_suffix" == "true" ]]; then
+            local base_version=""
+            local suffix=""
+            if [[ -n "$current" && "$current" != "null" ]]; then
+                base_version="${current%%-*}"
+                local suffix_part="${current##*-}"
+                if [[ "$base_version" != "$current" ]]; then
+                    suffix="$suffix_part"
+                fi
+            fi
+            read -p "  $component_name base version (current: $base_version) [leave blank to skip]: " -r base_input
+            read -p "  $component_name suffix (current: $suffix) [leave blank to keep current]: " -r suffix_input
+            if [[ -n "$base_input" ]]; then
+                local new_version="$base_input"
+                if [[ -n "$suffix_input" ]]; then
+                    new_version="${new_version}-${suffix_input}"
+                elif [[ -n "$suffix" ]]; then
+                    new_version="${new_version}-${suffix}"
+                fi
+                versions[$component_name]="$new_version"
+            else
+                versions[$component_name]="$current"
+            fi
+        else
+            read -p "  $component_name (current: $current) [leave blank to skip]: " -r new_value
+            if [[ -n "$new_value" ]]; then
+                versions[$component_name]="$new_value"
+            else
+                versions[$component_name]="$current"
+            fi
+        fi
+    done
+    local versions_json="{"
+    for key in "${!versions[@]}"; do
+        versions_json="${versions_json}\"$key\":\"${versions[$key]}\","
+    done
+    versions_json="${versions_json%,}}"
+    IMAGE_VERSIONS[$image]="$versions_json"
+}
+
+update_tag_config() {
+    local image=$1
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    log_info "Updating $config..."
+    local versions_json="${IMAGE_VERSIONS[$image]}"
+    local components=$(get_component_names "$config")
+    for component_name in $components; do
+        local new_version=$(echo "$versions_json" | grep -o "\"$component_name\":\"[^\"]*\"" | cut -d'"' -f4)
+        if [[ -n "$new_version" ]]; then
+            local has_arg_value=$(yq eval ".components[] | select(.name == \"$component_name\") | has(\"arg_value\")" "$config" 2>/dev/null)
+            if [[ "$has_arg_value" == "true" ]]; then
+                yq eval "(.components[] | select(.name == \"$component_name\") | .arg_value) = \"$new_version\"" -i "$config"
+            else
+                yq eval "(.components[] | select(.name == \"$component_name\") | .version) = \"$new_version\"" -i "$config"
+            fi
+        fi
+    done
+    log_success "Updated $config"
+}
+
+update_dockerfile() {
+    local image=$1
+    local dockerfile="${IMAGE_PATHS[$image]}/Dockerfile"
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    log_info "Updating $dockerfile..."
+    local components=$(get_component_names "$config")
+    local versions_json="${IMAGE_VERSIONS[$image]}"
+    for component_name in $components; do
+        local arg_name=$(yq eval ".components[] | select(.name == \"$component_name\") | .arg" "$config" 2>/dev/null)
+        if [[ -n "$arg_name" ]]; then
+            local new_version=$(echo "$versions_json" | grep -o "\"$component_name\":\"[^\"]*\"" | cut -d'"' -f4)
+            if [[ -n "$new_version" ]]; then
+                local current_line=$(grep "ARG $arg_name" "$dockerfile" | head -1)
+                if [[ $current_line =~ \"[^\"]*\" ]]; then
+                    sed -i "" "/ARG $arg_name=\"/s|=\"[^\"]*\"|=\"$new_version\"|" "$dockerfile"
+                else
+                    sed -i "" "/ARG $arg_name=/s|=[^ ]*$|=$new_version|" "$dockerfile"
+                fi
+            fi
+        fi
+    done
+    log_success "Updated $dockerfile"
+}
+
+confirm_update() {
+    local image=$1
+    echo ""
+    log_info "Ready to update: $image"
+    read -p "Continue? (y/n): " -r confirm
+    if [[ "${confirm,,}" != "y" ]]; then
+        log_warning "Skipping $image"
+        return 1
+    fi
+    return 0
+}
+
+show_summary() {
+    local total=$1
+    local success=$2
+    local failed=$3
+    echo ""
+    log_info "========== Update Summary =========="
+    log_info "Total images: $total"
+    log_success "Successful: $success"
+    if [[ $failed -gt 0 ]]; then
+        log_error "Failed: $failed"
+    fi
+    echo ""
+}
+
+main() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                echo "Usage: $0 [--dry-run]"
+                exit 1
+                ;;
+        esac
+    done
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_warning "DRY-RUN mode - files will not be updated"
+    fi
+    
+    check_dependencies
+    discover_images
+    show_menu
+    
+    if [[ "$BATCH_GOLANG" == "true" ]]; then
+        prompt_for_batch_golang
+    fi
+    
+    local success=0
+    local failed=0
+    
+    log_info "\n========== Starting Updates =========="
+    
+    for image in "${SELECTED_IMAGES[@]}"; do
+        if confirm_update "$image"; then
+            prompt_for_versions "$image"
+            if [[ "$DRY_RUN" != "true" ]]; then
+                update_tag_config "$image"
+                update_dockerfile "$image"
+            fi
+            ((success++))
+        else
+            ((failed++))
+        fi
+    done
+    
+    show_summary "${#SELECTED_IMAGES[@]}" "$success" "$failed"
+}
+
+main "$@"
