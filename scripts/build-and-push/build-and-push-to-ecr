@@ -1,0 +1,442 @@
+#!/usr/bin/env bash
+#
+# Description:
+#   Builds Docker images locally and pushes them to AWS ECR with auto-generated
+#   tags based on component versions from tag-config.yaml. Supports batch builds,
+#   AWS profile selection, and dry-run mode for previewing actions.
+#
+# Usage:
+#   ./build-and-push-to-ecr          - Interactive mode
+#   ./build-and-push-to-ecr --dry-run - Preview without building/pushing
+#   make build-and-push-images       - Interactive mode via Makefile
+#   make build-and-push-images-dry-run - Dry-run mode via Makefile
+#
+# Environment Variables:
+#   AWS_PROFILE      - AWS profile to use (defaults to 'dp-ci', overridable via prompt)
+#
+# Inputs:
+#   - tag-config.yaml files in each image directory (for version extraction)
+#   - Dockerfile in each image directory (for building)
+#   - User selections, AWS profile, and AWS Account ID
+#
+# Outputs:
+#   - Built Docker images locally
+#   - Images pushed to AWS ECR at: <ACCOUNT_ID>.dkr.ecr.eu-west-2.amazonaws.com/onsdigital/dp-concourse-tools-<TOP_LEVEL_DIR>:<TAG>
+#   - Optional 'latest' tag if requiresIsLatest is set in tag-config.yaml
+#   - Summary report of successful/skipped builds and pushes
+#
+# Dependencies:
+#   - yq (YAML processor)
+#   - git (version control)
+#   - docker (for building and tagging images)
+#   - aws (AWS CLI for ECR authentication)
+#
+
+set -o pipefail
+
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$SCRIPT_DIR/utils/common.sh"
+
+# Global variables
+DRY_RUN=false
+AWS_ACCOUNT_ID=""
+AWS_PROFILE="dp-ci"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+declare -a SELECTED_IMAGES=()
+declare -A IMAGE_PATHS=()
+
+# extract_version_part: Extract version part based on version_tag mode | $1: version, $2: version_tag (major/minor/patch/custom)
+extract_version_part() {
+    local version=$1
+    local version_tag=$2
+    
+    # If version is null/empty, check if version_tag is a standard extraction mode
+    if [[ -z "$version" || "$version" == "null" ]]; then
+        # If version_tag is NOT one of the standard modes, use it as-is
+        case "$version_tag" in
+            major|minor|patch)
+                # Standard extraction modes require a valid version
+                return
+                ;;
+            *)
+                # Use version_tag as-is (custom version string)
+                echo "$version_tag"
+                return
+                ;;
+        esac
+    fi
+    
+    # Version is valid, derive version part using version_tag
+    case "$version_tag" in
+        major)
+            # Extract major (first number before dot)
+            echo "${version%%.*}"
+            ;;
+        minor)
+            # Extract major.minor (first two dot-separated parts)
+            local major="${version%%.*}"
+            local rest="${version#*.}"
+            if [[ "$rest" == "$version" ]]; then
+                # No dot found, just return the version
+                echo "$version"
+            else
+                local minor="${rest%%.*}"
+                echo "${major}.${minor}"
+            fi
+            ;;
+        patch)
+            # Use full version as-is
+            echo "$version"
+            ;;
+        *)
+            # ERROR: version exists but version_tag is custom (not major/minor/patch)
+            # This is an invalid configuration
+            echo "ERROR: version_tag must be major, minor, or patch when version is set" >&2
+            return 1
+            ;;
+    esac
+}
+
+# get_tag_version: Get generated tag version for a component | $1: config file, $2: component name
+get_tag_version() {
+    local config=$1
+    local component_name=$2
+    
+    local full_version=$(yq eval ".components[] | select(.name == \"$component_name\") | .version" "$config" 2>/dev/null)
+    local version_tag=$(yq eval ".components[] | select(.name == \"$component_name\") | .version_tag" "$config" 2>/dev/null)
+    local distro_suffix=$(yq eval ".components[] | select(.name == \"$component_name\") | .distro_suffix" "$config" 2>/dev/null)
+    
+    # Extract version based on version_tag
+    local derived_version=$(extract_version_part "$full_version" "$version_tag")
+    
+    # Append distro_suffix if it exists
+    if [[ "$distro_suffix" != "null" && -n "$distro_suffix" ]]; then
+        derived_version="${derived_version}-${distro_suffix}"
+    fi
+    
+    echo "$derived_version"
+}
+
+# generate_tag: Generate full ECR tag by substituting components in format string | $1: image name
+generate_tag() {
+    local image=$1
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    
+    local format=$(yq eval '.format' "$config" 2>/dev/null)
+    if [[ -z "$format" ]]; then
+        return
+    fi
+    
+    local tag="$format"
+    
+    # Replace each {component} with its tag version from config
+    while IFS= read -r line; do
+        if [[ $line =~ \{([^}]+)\} ]]; then
+            local component="${BASH_REMATCH[1]}"
+            local version=$(get_tag_version "$config" "$component")
+            if [[ -n "$version" && "$version" != "null" ]]; then
+                tag="${tag//\{$component\}/$version}"
+            fi
+        fi
+    done < <(echo "$format" | grep -o '{[^}]*}')
+    
+    echo "$tag"
+}
+
+# build_image: Build Docker image locally | $1: image name | Returns 0 on success, 1 on failure
+build_image() {
+    local image=$1
+    local image_dir="${IMAGE_PATHS[$image]}"
+    local config="$image_dir/tag-config.yaml"
+    
+    # Generate the tag
+    local tag=$(generate_tag "$image")
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_warning "[DRY-RUN] Would build: $image with tag $tag"
+        return 0
+    fi
+    
+    log_info "Building $image..."
+    
+    # Get commit hash
+    local commit=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+    
+    # Build image
+    local ecr_url="${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital"
+    local top_dir="${image%%/*}"
+    local repo_name="dp-concourse-tools-${top_dir}"
+    local image_uri="${ecr_url}/${repo_name}:${tag}"
+    
+    if ! (cd "$image_dir" && docker build --build-arg COMMIT="$commit" -t "$image_uri" .); then
+        log_error "Failed to build $image"
+        return 1
+    fi
+    
+    log_success "Built $image with tag $tag"
+    return 0
+}
+
+# push_image: Push Docker image to ECR | $1: image name
+push_image() {
+    local image=$1
+    local image_dir="${IMAGE_PATHS[$image]}"
+    local config="$image_dir/tag-config.yaml"
+    
+    # Check if image requires latest tag
+    local requires_latest=$(yq eval '.requiresIsLatest' "$config" 2>/dev/null)
+    
+    # Generate the tag
+    local tag=$(generate_tag "$image")
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        local latest_msg=""
+        if [[ "$requires_latest" == "true" ]]; then
+            latest_msg=" + tag as latest"
+        fi
+        log_warning "[DRY-RUN] Would push $image with tag $tag$latest_msg"
+        return 0
+    fi
+    
+    log_info "Pushing $image..."
+    
+    if [[ -z "$AWS_ACCOUNT_ID" ]]; then
+        log_warning "Skipping push - no AWS Account ID provided"
+        return 0
+    fi
+    
+    # Get image details
+    local ecr_url="${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital"
+    local top_dir="${image%%/*}"
+    local repo_name="dp-concourse-tools-${top_dir}"
+    local image_uri="${ecr_url}/${repo_name}:${tag}"
+    
+    # Login to ECR
+    if ! aws ecr get-login-password --region eu-west-2 --profile "$AWS_PROFILE" | docker login --username AWS --password-stdin "$ecr_url"; then
+        log_error "Failed to login to ECR"
+        return 1
+    fi
+    
+    # Push image
+    if ! docker push "$image_uri"; then
+        log_error "Failed to push $image"
+        return 1
+    fi
+    
+    # Push latest tag if required
+    if [[ "$requires_latest" == "true" ]]; then
+        echo ""
+        read -p "Push with 'latest' tag? (Enter to push, 'n' to skip): " -r push_latest
+        if [[ -z "$push_latest" || "$push_latest" == "y" ]]; then
+            local latest_uri="${ecr_url}/${repo_name}:latest"
+            if ! docker tag "$image_uri" "$latest_uri"; then
+                log_error "Failed to tag $image as latest"
+                return 1
+            fi
+            if ! docker push "$latest_uri"; then
+                log_error "Failed to push latest tag for $image"
+                return 1
+            fi
+            log_success "Pushed $image with tag $tag (+ latest)"
+        else
+            log_warning "Skipped pushing latest tag for $image"
+            log_success "Pushed $image with tag $tag"
+        fi
+    else
+        log_success "Pushed $image with tag $tag"
+    fi
+}
+
+# show_built_images: Display list of built images with their tags | $1: array variable name
+show_built_images() {
+    local -n images_array=$1
+    
+    echo ""
+    log_info "========== Built Images =========="
+    for image in "${images_array[@]}"; do
+        local tag=$(generate_tag "$image")
+        echo "  • $image: $tag"
+    done
+    echo ""
+}
+
+# approve_push: Prompt user to approve pushing built images to ECR | $1: array variable name | Returns 0 to approve, 1 to cancel
+approve_push() {
+    local -n images_array=$1
+    
+    echo ""
+    log_info "Ready to push ${#images_array[@]} image(s) to ECR"
+    read -p "Approve and push to ECR? (Enter to push, 'n' to cancel): " -r approval
+    
+    # Empty input or 'y' approves; anything else (including 'n') cancels
+    if [[ -n "$approval" && "${approval,,}" != "y" ]]; then
+        log_warning "Push cancelled"
+        return 1
+    fi
+    
+    return 0
+}
+
+# show_tags: Display generated tag for an image | $1: image name
+show_tags() {
+    local image=$1
+    local tag=$(generate_tag "$image")
+    
+    if [[ -n "$tag" ]]; then
+        log_info "Generated tag for $image: $tag"
+    fi
+}
+
+show_built_images() {
+    local -n images_array=$1
+    
+    echo ""
+    log_info "========== Built Images =========="
+    for image in "${images_array[@]}"; do
+        local tag=$(generate_tag "$image")
+        echo "  • $image: $tag"
+    done
+    echo ""
+}
+
+approve_push() {
+    local count=$1
+    
+    echo ""
+    log_info "Ready to push $count image(s) to ECR"
+    read -p "Approve and push to ECR? (Enter to push, 'n' to cancel): " -r approval
+    
+    # Empty input or 'y' approves; anything else (including 'n') cancels
+    if [[ -n "$approval" && "${approval,,}" != "y" ]]; then
+        log_warning "Push cancelled"
+        return 1
+    fi
+    
+    return 0
+}
+
+show_tags() {
+    local image=$1
+    local tag=$(generate_tag "$image")
+    
+    if [[ -n "$tag" ]]; then
+        log_info "Generated tag for $image: $tag"
+    fi
+}
+
+main() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                echo "Usage: $0 [--dry-run]"
+                exit 1
+                ;;
+        esac
+    done
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_warning "Running in DRY-RUN mode - will show what would be built/pushed"
+    fi
+    
+    check_dependencies yq git docker aws
+    discover_images
+    show_menu
+    
+    # Only ask for AWS details if not in dry-run mode
+    if [[ "$DRY_RUN" != true ]]; then
+        echo ""
+        read -p "Enter AWS Profile (default: dp-ci, blank to keep): " -r profile_input
+        [[ -n "$profile_input" ]] && AWS_PROFILE="$profile_input"
+
+        # Login to AWS
+        aws sso login --profile "$AWS_PROFILE"
+        
+        # Get AWS Account ID from the specified profile
+        log_info "Retrieving AWS Account ID from profile: $AWS_PROFILE"
+        local retrieved_account_id=$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text)
+        
+        if [[ -z "$retrieved_account_id" ]]; then
+            log_error "Failed to retrieve AWS Account ID from profile '$AWS_PROFILE'"
+            log_info "Make sure your AWS credentials are configured correctly"
+            exit 1
+        fi
+        
+        log_success "Retrieved AWS Account ID: $retrieved_account_id"
+        
+        # Ask user to confirm or override the account ID
+        read -p "Confirm AWS Account ID (press Enter to use $retrieved_account_id, or type a different one): " -r account_input
+        if [[ -z "$account_input" ]]; then
+            AWS_ACCOUNT_ID="$retrieved_account_id"
+        else
+            AWS_ACCOUNT_ID="$account_input"
+        fi
+        
+        log_success "Using AWS Account ID: $AWS_ACCOUNT_ID"
+    fi
+    
+    local success=0
+    local skipped=0
+    local failed=0
+    local built_images=()
+    
+    # Show tags for all selected images before building
+    echo ""
+    log_info "========== Image Tags =========="
+    for image in "${SELECTED_IMAGES[@]}"; do
+        show_tags "$image"
+    done
+    echo ""
+    
+    log_info "========== Starting Build =========="
+    
+    # Phase 1: Build all images
+    for image in "${SELECTED_IMAGES[@]}"; do
+        if confirm_update "$image"; then
+            if build_image "$image"; then
+                built_images+=("$image")
+                ((success++))
+            else
+                ((failed++))
+            fi
+        else
+            ((skipped++))
+        fi
+    done
+    
+    # Phase 2: Show built images and ask for approval before pushing
+    if [[ ${#built_images[@]} -gt 0 ]]; then
+        show_built_images built_images
+        
+        if approve_push built_images; then
+            log_info "========== Starting Push =========="
+            local push_success=0
+            local push_skipped=0
+            local push_failed=0
+            
+            # Phase 3: Push all built images
+            for image in "${built_images[@]}"; do
+                if push_image "$image"; then
+                    ((push_success++))
+                else
+                    ((push_failed++))
+                fi
+            done
+            
+            show_summary "${#built_images[@]}" "$push_success" "$push_skipped" "$push_failed"
+        else
+            log_warning "Build completed but push was cancelled"
+            log_info "Images built but not pushed: ${#built_images[@]}"
+        fi
+    else
+        log_error "No images built"
+    fi
+}
+
+# Run main function
+main "$@"
