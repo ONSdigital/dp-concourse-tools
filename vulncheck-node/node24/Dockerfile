@@ -4,7 +4,7 @@ FROM golang:$GOLANG_VERSION
 
 ARG GOLANG_VERSION
 ARG DIS_VULNCHECK_VERSION="v0.6.1"
-ARG NODEJS_VERSION="24.19.0"
+ARG NODEJS_VERSION="24.21.0"
 # COMMIT should be provided from outside the build file as a build-arg
 ARG COMMIT
 
