@@ -2,16 +2,16 @@ ARG GOLANG_VERSION="1.27.2-bookworm"
 ARG PYTHON_VERSION="3.14"
 
 FROM golang:${GOLANG_VERSION} AS go-base
-ARG GOLANGCILINT_VERSION="2.12.2"
+ARG GOLANGCILINT_VERSION="2.14.0"
 
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | \
-    sh -s -- -b $(go env GOPATH)/bin v${GOLANGCILINT_VERSION}
+RUN GOTOOLCHAIN=local go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v${GOLANGCILINT_VERSION} \
+    && golangci-lint version
 
 FROM python:${PYTHON_VERSION}-bookworm
 
 ARG GOLANG_VERSION
 ARG PYTHON_VERSION
-ARG GOLANGCILINT_VERSION="2.12.2"
+ARG GOLANGCILINT_VERSION="2.14.0"
 ARG RUFF_VERSION="0.16.2"
 ARG COMMIT
 

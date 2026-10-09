@@ -4,12 +4,13 @@ FROM golang:$GOLANG_VERSION
 
 # Has to be redeclared
 ARG GOLANG_VERSION
-ARG GOLANGCILINT_VERSION="2.12.2"
+ARG GOLANGCILINT_VERSION="2.14.0"
 
 LABEL go_version="${GOLANG_VERSION}"
 LABEL golangci-lint_version="$GOLANGCILINT_VERSION"
 
 # binary will be $(go env GOPATH)/bin/golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v$GOLANGCILINT_VERSION
+RUN GOTOOLCHAIN=local go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v${GOLANGCILINT_VERSION} \
+    && golangci-lint version
 
 CMD /bin/bash
