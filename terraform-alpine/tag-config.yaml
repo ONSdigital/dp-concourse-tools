@@ -1,0 +1,15 @@
+components:
+  - name: alpine
+    arg: BASE_IMAGE_ALPINE_VERSION
+    version: "3.21.2"
+  - name: helm
+    arg: HELM_VERSION
+    version: "3.2.1"
+  - name: terraform
+    arg: TERRAFORM_VERSION
+    version: "1.10.5"
+  - name: kubectl
+    arg: KUBECTL_VERSION
+    version: "1.32.1"
+format: "{alpine}-helm-{helm}-terraform-{terraform}-kubectl-{kubectl}"
+requiresIsLatest: true

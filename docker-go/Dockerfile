@@ -1,9 +1,9 @@
 ARG GOLANG_VERSION="1.27.2"
 # dind version 29 is not yet compatible with testcontainers-go - please
 # ensure compatibility before updating to a newer version of dind.
-ARG DOCKER_VERSION="28.5.2-dind"
+ARG DOCKER_VERSION="28.5.2"
 
-FROM docker:$DOCKER_VERSION
+FROM docker:${DOCKER_VERSION}-dind
 
 ARG GOLANG_VERSION
 ARG DOCKER_VERSION

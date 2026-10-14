@@ -1,0 +1,9 @@
+components:
+  - name: alpine
+    arg: BASE_IMAGE_ALPINE_VERSION
+    version: "3.21.7"
+  - name: github-cli
+    arg: GITHUB_CLI_VERSION
+    version: "2.79.0"
+format: "{alpine}-github-cli-{github-cli}"
+requiresIsLatest: true
