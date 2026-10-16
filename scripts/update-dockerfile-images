@@ -81,14 +81,14 @@ get_tag_version() {
     local component_name=$2
     local full_version=$(get_component_version "$config" "$component_name")
     
-    # Check if component has VERSIONING enum
-    local has_versioning=$(yq eval ".components[] | select(.name == \"$component_name\") | has(\"VERSIONING\")" "$config" 2>/dev/null)
+    # Check if component has versioning enum
+    local has_versioning=$(yq eval ".components[] | select(.name == \"$component_name\") | has(\"versioning\")" "$config" 2>/dev/null)
     
     if [[ "$has_versioning" == "true" ]]; then
         # Extract major version (first part before dot)
         echo "${full_version%%.*}"
     else
-        # No VERSIONING, use full version
+        # No versioning, use full version
         echo "$full_version"
     fi
 }
