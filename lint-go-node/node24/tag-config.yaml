@@ -6,7 +6,7 @@ components:
   - name: golangci-lint
     arg: GOLANGCILINT_VERSION
     version: "2.12.2"
-    VERSIONING:
+    versioning:
       enum:
         - "major"
         - "minor"
@@ -14,7 +14,7 @@ components:
   - name: node
     arg: NODEJS_VERSION
     version: "24.19.0"
-    VERSIONING:
+    versioning:
       enum:
         - "major"
         - "minor"

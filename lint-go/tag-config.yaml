@@ -6,7 +6,7 @@ components:
   - name: golangci-lint
     arg: GOLANGCILINT_VERSION
     version: "2.12.2"
-    VERSIONING:
+    versioning:
       enum:
         - "major"
         - "minor"

@@ -1,18 +1,18 @@
 components:
   - name: golang
     arg: GOLANG_VERSION
-    version: "1.26.8"
+    version: "1.27.2"
     has_distro_suffix: false
   - name: docker
     arg: DOCKER_VERSION
     version: "28.5.2"
-    VERSIONING:
+    versioning:
       enum:
         - "major"
         - "minor"
         - "patch"
   - name: python
     arg: PYTHON_VERSION
-    version: "3.14"
+    version: "3.15"
 format: "{golang}-python-{python}-dind-{docker}"
 requiresIsLatest: true

@@ -8,7 +8,7 @@ components:
   - name: node
     arg: NODEJS_VERSION
     version: "24.19.0"
-    VERSIONING:
+    versioning:
       enum:
         - "major"
         - "minor"
