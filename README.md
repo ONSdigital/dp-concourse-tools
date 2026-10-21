@@ -52,7 +52,9 @@ docker buildx version
 > :warning: **Check the current "latest" tagged version of docker repo has an equivalent "version" tag so the image is not lost**
 You can check this on selecting the image you want to change in AWS CI account Private ECR, searching for dp-concourse-tools. If you can only see a latest tag listed or no other images have a `DIGEST` SHA that matches other `version` tagged images you will need to follow the [version tagging for things with only latest tags](#version-tagging-for-things-with-only-latest-tags) guide before progressing with building an image.
 
-There is now an alternate method to the below - see [Deploying via Makefile](#deploying-via-makefile)
+For detailed instructions on building and deploying images, including automated script options, see the [Scripts Documentation](./scripts).
+
+### Manual Build Process
 
 1. Build image under unique tag abiding by instructions in [Tagging strategy](#tagging-strategy) section
 
