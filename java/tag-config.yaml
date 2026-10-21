@@ -1,0 +1,9 @@
+components:
+  - name: maven
+    arg: MAVEN_VERSION
+    version: "3.9.9"
+  - name: jdk
+    arg: JDK_VERSION
+    version: "17"
+format: "{maven}-eclipse-temurin-{jdk}"
+requiresIsLatest: false

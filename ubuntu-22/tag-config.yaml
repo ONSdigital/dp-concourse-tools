@@ -1,0 +1,9 @@
+components:
+  - name: ubuntu
+    arg: UBUNTU_VERSION
+    version: "22.04"
+    arg_value: "jammy-20260509"
+    ubuntu_codename: "jammy"
+    build_date: "20260509"
+format: "ubuntu22.4-jammy-{build_date}"
+requiresIsLatest: false

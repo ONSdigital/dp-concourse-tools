@@ -1,0 +1,9 @@
+components:
+  - name: alpine
+    arg: ALPINE_VERSION
+    version: "3.20.3"
+  - name: python
+    arg: PYTHON_VERSION
+    version: "3.12"
+format: "{alpine}-python-{python}"
+requiresIsLatest: false

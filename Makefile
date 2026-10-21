@@ -10,6 +10,7 @@ AWS_ACCOUNT_ID?=changeme
 ECR_URL=${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/onsdigital
 REPO_NAME=dp-concourse-tools-$(basename ${TOOL})
 NEW_TAG?=changeme
+SCRIPTS?=scripts
 
 .PHONY: new
 new: check-env build login deploy ## Builds and deploys images to ECR
@@ -49,6 +50,22 @@ deploy: ## Deploys an image to ECR
 deploy-latest: ## Tags image as latest and deploys to ECR
 	docker tag ${ECR_URL}/${REPO_NAME}:$(NEW_TAG) ${ECR_URL}/${REPO_NAME}:latest; \
 	docker push ${ECR_URL}/${REPO_NAME}:latest
+
+.PHONY: update-images
+update-images: ## Interactively update Docker image versions and configs
+	@bash ./$(SCRIPTS)/update-dockerfile-images
+
+.PHONY: update-images-dry-run
+update-images-dry-run: ## Preview image updates without making changes
+	@bash ./$(SCRIPTS)/update-dockerfile-images --dry-run
+
+.PHONY: build-and-push-images
+build-and-push-images: ## Build Docker images and push to ECR
+	@bash ./$(SCRIPTS)/build-and-push-to-ecr
+
+.PHONY: build-and-push-images-dry-run
+build-and-push-images-dry-run: ## Preview build and push without making changes
+	@bash ./$(SCRIPTS)/build-and-push-to-ecr --dry-run
 
 .PHONY: help
 help: ## Show help page for list of make targets
