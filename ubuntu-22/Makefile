@@ -2,7 +2,7 @@ SHELL := bash
 
 ECR_AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --profile dp-ci --query Account --output text)
 ECR_AWS_ACCOUNT_URL = $(ECR_AWS_ACCOUNT).dkr.ecr.eu-west-2.amazonaws.com
-UBUNTU_YEAR_NAME = ubuntu22.4
+UBUNTU_YEAR_NAME = ubuntu22.04
 UBUNTU_VERSION = jammy-20260930
 IMAGE_NAME = ${ECR_AWS_ACCOUNT_URL}/onsdigital/dp-concourse-tools-ubuntu-22:${UBUNTU_YEAR_NAME}-${UBUNTU_VERSION}
 IMAGE_PLATFORM = linux/amd64
