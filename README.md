@@ -99,6 +99,8 @@ If the dockerfile is in a subdirectory, specify TOOL_DIR:
 
 This only builds and deploys a tagged image, it does not add a `latest` tag.
 
+For `ubuntu-22`, run `cd ubuntu-22 && make build publish` instead of the repository-level `make new`. The [ubuntu-22 Makefile](ubuntu-22/Makefile) builds for `linux/amd64` and refuses to publish a local image with a different platform; the repository-level build does not select a platform.
+
 For the majority of use cases we should *not* be using `latest` tag. There are exceptions however, for example [Go libraries](https://github.com/ONSdigital/dp-standards/blob/main/DEPENDENCY_UPGRADING.md#go-based-apps-and-libraries)
 
 To build and deploy an image with a latest tag you can do the following:
