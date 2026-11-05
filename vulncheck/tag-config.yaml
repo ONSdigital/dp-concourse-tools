@@ -2,8 +2,10 @@ components:
   - name: golang
     arg: GOLANG_VERSION
     version: "1.26.8"
+    version_tag: "patch"
   - name: vulncheck
     arg: DIS_VULNCHECK_VERSION
     version: "0.6.1"
+    version_tag: "patch"
 format: "{golang}-vulncheck-{vulncheck}"
 requiresIsLatest: true

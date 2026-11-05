@@ -2,8 +2,10 @@ components:
   - name: alpine
     arg: ALPINE_VERSION
     version: "3.20.3"
+    version_tag: "patch"
   - name: python
     arg: PYTHON_VERSION
     version: "3.12"
+    version_tag: "patch"
 format: "{alpine}-python-{python}"
 requiresIsLatest: false

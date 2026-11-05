@@ -2,6 +2,7 @@ components:
   - name: ubuntu
     arg: UBUNTU_VERSION
     version: "20.04"
+    version_tag: "patch"
     arg_value: "focal-20241011"
     ubuntu_codename: "focal"
     build_date: "20241011"

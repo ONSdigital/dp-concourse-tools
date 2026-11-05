@@ -2,8 +2,10 @@ components:
   - name: maven
     arg: MAVEN_VERSION
     version: "3.9.9"
+    version_tag: "patch"
   - name: jdk
     arg: JDK_VERSION
     version: "17"
+    version_tag: "patch"
 format: "{maven}-eclipse-temurin-{jdk}"
 requiresIsLatest: false

@@ -1,15 +1,12 @@
 components:
   - name: golang
     arg: GOLANG_VERSION
-    version: "1.26.8-bookworm"
-    has_distro_suffix: true
+    version: "1.26.8"
+    version_tag: "patch"
+    distro_suffix: "bookworm"
   - name: golangci-lint
     arg: GOLANGCILINT_VERSION
     version: "2.12.2"
-    versioning:
-      enum:
-        - "major"
-        - "minor"
-        - "patch"
+    version_tag: "patch"
 format: "{golang}-golangci-lint-{golangci-lint}"
 requiresIsLatest: true

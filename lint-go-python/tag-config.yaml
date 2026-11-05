@@ -2,14 +2,18 @@ components:
   - name: golang
     arg: GOLANG_VERSION
     version: "1.26.8"
+    version_tag: "patch"
   - name: python
     arg: PYTHON_VERSION
     version: "3.14"
+    version_tag: "patch"
   - name: golangci-lint
     arg: GOLANGCILINT_VERSION
     version: "2.12.2"
+    version_tag: "patch"
   - name: ruff
     arg: RUFF_VERSION
     version: "0.16.2"
+    version_tag: "patch"
 format: "{golang}-python-{python}-golangci-lint-{golangci-lint}-ruff-{ruff}"
 requiresIsLatest: true
