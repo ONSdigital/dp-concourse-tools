@@ -1,0 +1,335 @@
+#!/usr/bin/env bash
+#
+# Description:
+#   Interactively updates component versions in tag-config.yaml and Dockerfile
+#   files for Docker images. Supports batch updates (e.g., updating Go across
+#   multiple images) and dry-run mode for previewing changes.
+#
+# Usage:
+#   ./update-dockerfile              - Interactive mode
+#   ./update-dockerfile --dry-run    - Preview changes without applying
+#   make update-images               - Interactive mode via Makefile
+#   make update-images-dry-run       - Dry-run mode via Makefile
+#
+# Environment Variables:
+#   None (all configuration through interactive prompts)
+#
+# Inputs:
+#   - tag-config.yaml files in each image directory
+#   - Dockerfile in each image directory
+#   - User selections and version inputs
+#
+# Outputs:
+#   - Updated tag-config.yaml files with new component versions
+#   - Updated Dockerfile with new ARG values
+#   - Summary report of successful/skipped updates
+#
+# Dependencies:
+#   - yq (YAML processor)
+#   - git (version control)
+#
+
+set -o pipefail
+
+# Source common utilities from utils directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$SCRIPT_DIR/../utils/common.sh"
+
+DRY_RUN=false
+UPDATE_MODE=""
+declare -a SELECTED_IMAGES=()
+declare -A IMAGE_PATHS=()
+declare -A IMAGE_VERSIONS=()
+BATCH_GOLANG=""
+
+# get_component_names: Extract all component names from config | $1: config file path
+get_component_names() {
+    local config=$1
+    yq eval '.components[] | .name' "$config" 2>/dev/null
+}
+
+# get_component_version: Get version of a specific component | $1: config file, $2: component name
+get_component_version() {
+    local config=$1
+    local component_name=$2
+    yq eval ".components[] | select(.name == \"$component_name\") | .version" "$config" 2>/dev/null
+}
+
+# validate_version: Check if version matches X.Y.Z format | $1: version string
+validate_version() {
+    local version=$1
+    # Matches: x or x.y or x.y.z
+    if [[ $version =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# prompt_for_batch_golang: Prompt user for golang version to apply to all selected images
+prompt_for_batch_golang() {
+    if [[ -z "$BATCH_GOLANG" || "$BATCH_GOLANG" == "true" ]]; then
+        read -p "Enter golang base version for all selected images: " -r golang_version
+        if [[ -n "$golang_version" ]]; then
+            BATCH_GOLANG="$golang_version"
+        fi
+    fi
+}
+
+# prompt_for_versions: Interactively prompt user for new versions of all components | $1: image name
+prompt_for_versions() {
+    local image=$1
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    log_info "Configuring versions for: $image"
+    declare -A versions
+    local components=$(get_component_names "$config")
+    
+    for component_name in $components; do
+        local current_version=$(get_component_version "$config" "$component_name")
+        local distro_suffix=$(yq eval ".components[] | select(.name == \"$component_name\") | .distro_suffix" "$config" 2>/dev/null)
+        
+        # Skip if version doesn't exist (is null)
+        if [[ "$current_version" == "null" || -z "$current_version" ]]; then
+            log_warning "Skipping $component_name - no version field found"
+            continue
+        fi
+        
+        # Handle batch golang update
+        if [[ "$component_name" == "golang" && -n "$BATCH_GOLANG" && "$BATCH_GOLANG" != "true" ]]; then
+            local golang_version="$BATCH_GOLANG"
+            
+            # Validate version format
+            if ! validate_version "$golang_version"; then
+                log_error "Invalid version format: $golang_version (expected format: X.Y.Z or X.Y or X)"
+                exit 1
+            fi
+            
+            # If distro_suffix exists, ask for it
+            if [[ "$distro_suffix" != "null" && -n "$distro_suffix" ]]; then
+                read -p "  $component_name distro suffix (current: $distro_suffix) [leave blank to keep current]: " -r suffix_input
+                if [[ -z "$suffix_input" ]]; then
+                    suffix_input="$distro_suffix"
+                fi
+                versions["${component_name}_suffix"]="$suffix_input"
+            fi
+            
+            versions[$component_name]="$golang_version"
+            echo "  $component_name: $current_version → $golang_version (batch)"
+            continue
+        fi
+        
+        while true; do
+            read -p "  $component_name (current: $current_version) [leave blank to skip]: " -r new_version
+            if [[ -z "$new_version" ]]; then
+                new_version="$current_version"
+                break
+            fi
+            if validate_version "$new_version"; then
+                break
+            else
+                log_error "Invalid version format: $new_version (expected format: X.Y.Z)"
+            fi
+        done
+        versions[$component_name]="$new_version"
+        
+        # If distro_suffix exists, ask for it
+        if [[ "$distro_suffix" != "null" && -n "$distro_suffix" ]]; then
+            read -p "  $component_name distro suffix (current: $distro_suffix) [leave blank to keep current]: " -r suffix_input
+            if [[ -z "$suffix_input" ]]; then
+                suffix_input="$distro_suffix"
+            fi
+            versions["${component_name}_suffix"]="$suffix_input"
+        fi
+    done
+    
+    local versions_json="{"
+    for key in "${!versions[@]}"; do
+        versions_json="${versions_json}\"$key\":\"${versions[$key]}\","
+    done
+    versions_json="${versions_json%,}}"
+    IMAGE_VERSIONS[$image]="$versions_json"
+}
+
+# update_tag_config: Write new versions to tag-config.yaml | $1: image name
+update_tag_config() {
+    local image=$1
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    log_info "Updating $config..."
+    local versions_json="${IMAGE_VERSIONS[$image]}"
+    local components=$(get_component_names "$config")
+    
+    for component_name in $components; do
+        local new_version=$(echo "$versions_json" | grep -o "\"$component_name\":\"[^\"]*\"" | cut -d'"' -f4)
+        if [[ -n "$new_version" ]]; then
+            # Update .version field
+            yq eval "(.components[] | select(.name == \"$component_name\") | .version) = \"$new_version\"" -i "$config"
+        fi
+        
+        # Update distro_suffix if it exists
+        local new_suffix=$(echo "$versions_json" | grep -o "\"${component_name}_suffix\":\"[^\"]*\"" | cut -d'"' -f4)
+        if [[ -n "$new_suffix" ]]; then
+            yq eval "(.components[] | select(.name == \"$component_name\") | .distro_suffix) = \"$new_suffix\"" -i "$config"
+        fi
+    done
+    
+    log_success "Updated $config"
+}
+
+# update_dockerfile: Write new versions to Dockerfile ARG statements | $1: image name
+update_dockerfile() {
+    local image=$1
+    local dockerfile="${IMAGE_PATHS[$image]}/Dockerfile"
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    log_info "Updating $dockerfile..."
+    local components=$(get_component_names "$config")
+    local versions_json="${IMAGE_VERSIONS[$image]}"
+    
+    for component_name in $components; do
+        local arg_name=$(yq eval ".components[] | select(.name == \"$component_name\") | .arg" "$config" 2>/dev/null)
+        if [[ -n "$arg_name" ]]; then
+            local new_version=$(echo "$versions_json" | grep -o "\"$component_name\":\"[^\"]*\"" | cut -d'"' -f4)
+            if [[ -n "$new_version" ]]; then
+                # Append distro_suffix if it exists
+                local new_suffix=$(echo "$versions_json" | grep -o "\"${component_name}_suffix\":\"[^\"]*\"" | cut -d'"' -f4)
+                if [[ -n "$new_suffix" ]]; then
+                    new_version="${new_version}-${new_suffix}"
+                fi
+                
+                local current_line=$(grep "ARG $arg_name" "$dockerfile" | head -1)
+                if [[ $current_line =~ \"[^\"]*\" ]]; then
+                    sed -i "" "/ARG $arg_name=\"/s|=\"[^\"]*\"|=\"$new_version\"|" "$dockerfile"
+                else
+                    sed -i "" "/ARG $arg_name=/s|=[^ ]*$|=$new_version|" "$dockerfile"
+                fi
+            fi
+        fi
+    done
+    
+    log_success "Updated $dockerfile"
+}
+
+# show_mode_menu: Display update mode options and store user selection
+show_mode_menu() {
+    echo ""
+    log_info "Select update mode:"
+    echo ""
+    echo "  1) Update tag-config AND Dockerfiles"
+    echo "     - Prompt for new component versions"
+    echo "     - Update tag-config.yaml with new versions"
+    echo "     - Update Dockerfile with new versions"
+    echo ""
+    echo "  2) Update Dockerfiles only"
+    echo "     - Use current versions from tag-config.yaml"
+    echo "     - Only update Dockerfile ARGs"
+    echo "     - No version prompts"
+    echo ""
+    read -p "Select mode (1 or 2): " -r mode_choice
+    
+    case "$mode_choice" in
+        1)
+            UPDATE_MODE="full"
+            ;;
+        2)
+            UPDATE_MODE="dockerfile-only"
+            ;;
+        *)
+            log_error "Invalid selection"
+            exit 1
+            ;;
+    esac
+}
+
+# get_current_versions_from_config: Load current versions from tag-config without prompting | $1: image name
+get_current_versions_from_config() {
+    local image=$1
+    local config="${IMAGE_PATHS[$image]}/tag-config.yaml"
+    declare -A versions
+    local components=$(get_component_names "$config")
+    
+    for component_name in $components; do
+        local current_version=$(get_component_version "$config" "$component_name")
+        local distro_suffix=$(yq eval ".components[] | select(.name == \"$component_name\") | .distro_suffix" "$config" 2>/dev/null)
+        
+        if [[ "$current_version" != "null" && -n "$current_version" ]]; then
+            versions[$component_name]="$current_version"
+            
+            if [[ "$distro_suffix" != "null" && -n "$distro_suffix" ]]; then
+                versions["${component_name}_suffix"]="$distro_suffix"
+            fi
+        fi
+    done
+    
+    local versions_json="{"
+    for key in "${!versions[@]}"; do
+        versions_json="${versions_json}\"$key\":\"${versions[$key]}\","
+    done
+    versions_json="${versions_json%,}}"
+    IMAGE_VERSIONS[$image]="$versions_json"
+}
+
+# main: Entry point for script
+main() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                echo "Usage: $0 [--dry-run]"
+                exit 1
+                ;;
+        esac
+    done
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_warning "DRY-RUN mode - files will not be updated"
+    fi
+    
+    check_dependencies yq git
+    discover_images
+    
+    # Select update mode first
+    show_mode_menu
+    
+    # Then select images
+    show_menu
+    
+    if [[ "$UPDATE_MODE" == "full" ]]; then
+        if [[ "$BATCH_GOLANG" == "true" ]]; then
+            prompt_for_batch_golang
+        fi
+    fi
+    
+    local success=0
+    local skipped=0
+    local failed=0
+    
+    log_info "========== Starting Updates =========="
+    
+    for image in "${SELECTED_IMAGES[@]}"; do
+        if confirm_update "$image"; then
+            if [[ "$UPDATE_MODE" == "full" ]]; then
+                prompt_for_versions "$image"
+            else
+                get_current_versions_from_config "$image"
+            fi
+            
+            if [[ "$DRY_RUN" != "true" ]]; then
+                if [[ "$UPDATE_MODE" == "full" ]]; then
+                    update_tag_config "$image"
+                fi
+                update_dockerfile "$image"
+            fi
+            ((success++))
+        else
+            ((skipped++))
+        fi
+    done
+    
+    show_summary "${#SELECTED_IMAGES[@]}" "$success" "$skipped" "$failed"
+}
+
+main "$@"

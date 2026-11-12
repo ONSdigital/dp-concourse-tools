@@ -1,0 +1,15 @@
+components:
+  - name: maven
+    arg: MAVEN_VERSION
+    version: "3.8.8"
+    version_tag: "patch"
+  - name: jdk
+    arg: JDK_VERSION
+    version: "8"
+    version_tag: "patch"
+  - name: node
+    arg: NODEJS_VERSION
+    version: "24.16.0"
+    version_tag: "patch"
+format: "{maven}-eclipse-temurin-{jdk}-node-{node}"
+requiresIsLatest: false
