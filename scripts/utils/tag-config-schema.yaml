@@ -1,0 +1,51 @@
+type: object
+description: Docker image component versions and tag generation configuration
+
+required:
+  - components
+  - format
+
+properties:
+  components:
+    type: array
+    description: List of components that make up the Docker image
+    minItems: 1
+    items:
+      type: object
+      description: Component definition
+      required:
+        - name
+        - arg
+      properties:
+        name:
+          type: string
+          description: Component identifier (e.g., 'golang', 'node', 'python', 'chrome')
+        
+        arg:
+          type: string
+          description: Dockerfile ARG variable name (e.g., 'GOLANG_VERSION', 'NODEJS_VERSION')
+        
+        version:
+          type: [string, "null"]
+          description: Full version string (e.g., '1.27.4', '24.22.0', '3.15'). Can be null if version_tag is a custom value
+        
+        version_tag:
+          type: string
+          description: How to extract version for tag generation. Use 'major', 'minor', 'patch' for semantic versioning, or a custom string
+          examples:
+            - major
+            - minor
+            - patch
+            - googlechromestablelatest
+        
+        distro_suffix:
+          type: string
+          description: Optional distribution suffix appended to version (e.g., 'bookworm', 'alpine', 'bullseye'). Not required.
+
+  format:
+    type: string
+    description: Tag format string using component names in curly braces. Example- '{golang}-node-{node}'
+
+  requiresIsLatest:
+    type: boolean
+    description: If true, image will also be tagged as 'latest' when pushed to ECR

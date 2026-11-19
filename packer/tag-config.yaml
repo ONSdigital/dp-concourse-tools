@@ -1,0 +1,7 @@
+components:
+  - name: packer
+    arg: PACKER_VERSION
+    version: "3.0.0"
+    version_tag: "patch"
+format: "{packer}"
+requiresIsLatest: true
