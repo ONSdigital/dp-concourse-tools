@@ -1,5 +1,7 @@
 # Digital Publishing Concourse Tools
 
+:warning: **Building and pushing to ECR currently does not work with the corporate macbooks, any attempt at doing so will cause failures in CI** :warning:
+
 Build tools we use in our Concourse CI pipelines as docker images.
 
 We now get images from the AWS CI account Private ECR.
