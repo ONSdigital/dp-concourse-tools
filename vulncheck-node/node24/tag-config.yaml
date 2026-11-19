@@ -5,11 +5,11 @@ components:
     version_tag: "patch"
   - name: vulncheck
     arg: DIS_VULNCHECK_VERSION
-    version: "0.6.1"
+    version: "0.7.0"
     version_tag: "patch"
   - name: node
     arg: NODEJS_VERSION
-    version: "24.21.0"
+    version: "24.22.0"
     version_tag: "major"
 format: "{golang}-vulncheck-{vulncheck}-node-{node}"
 requiresIsLatest: true

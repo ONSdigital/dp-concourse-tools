@@ -9,7 +9,7 @@ components:
     version_tag: "patch"
   - name: vulncheck
     arg: DIS_VULNCHECK_VERSION
-    version: "0.6.1"
+    version: "0.7.0"
     version_tag: "patch"
   - name: pip-audit
     arg: PIPAUDIT_VERSION
